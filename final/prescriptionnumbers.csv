@@ -1,0 +1,16 @@
+"County","Population","TotalScheduleIIOpioidPrescriptions","TotalNumberofScheduleIIOpioidSolidDosageUnits","IndividualsReceivingScheduleIIOpioidPrescription","%ofIndividualsReceivingScheduleIIOpioidPrescription","IndividualswithActivityofConcern","RateofIndividualswithActivityofConcern(per1,000)"
+"Barnstable",216343,22970,1194101,10064,4.7,17,1.7
+"Berkshire",127457,13973,729047,6042,4.7,9,1.5
+"Bristol",566414,64738,3861967,26398,4.7,21,0.8
+"Dukes",17364,1507,84634,752,4.3,5,0
+"Essex",791568,64492,3444223,29655,3.7,21,0.7
+"Franklin",71509,8584,503161,3505,4.9,5,NR
+"Hampden",473588,52876,3087533,22064,4.7,19,0.9
+"Hampshire",164339,15080,941042,6146,3.7,5,0
+"Middlesex",1614538,91295,4768212,45434,2.8,37,0.8
+"Nantucket",11237,1022,41928,506,4.5,0,0.0
+"Norfolk",706950,48152,2700658,22983,3.3,28,1.2
+"Plymouth",520230,47055,2726210,21579,4.1,28,1.3
+"Suffolk",802474,43603,2576554,20261,2.5,24,1.2
+"Worcester",832834,71713,4384857,31762,3.8,22,0.7
+"MA",6916845,547060,31044126,247151,3.6,233,0.9
