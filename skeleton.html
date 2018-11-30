@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Opiod Deaths MA</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+
+    <style type="text/css">
+
+
+    </style>
+</head>
+<body>
+    <h1>Opiods in Massachusetts</h1>
+    <h4> Nina Sonneborn and Steph Jordan and Anna Novak </h4>
+    <p>This is a description of our project/an intro</p>
+    <div>
+        <p> Text above first vis </p>
+    </div>
+    <svg id="vis1"></svg>
+    <div>
+        <p> Text above second vis </p>
+    </div>
+    <svg id="vis2"></svg>
+    <div>
+        <p> Text above third vis </p>
+    </div>
+    <svg id="vis3"></svg>
+    <div id="tooltip" class="hidden">
+
+      <p>
+        Name: <span id="name"></span><br />
+        Gender: <span id="gender"></span><br />
+
+      </p>
+    </div>
+
+    <script>
+    const margins = {top:10, bottom:60, left:60, right:10};
+    const width = 1000;
+    const height = 600;
+    d3.csv("county_deaths.csv").then(function(data)
+    {
+
+
+  });
+
+
+
+    </script>
+</body>
+</html>
