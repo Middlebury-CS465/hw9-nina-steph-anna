@@ -15,8 +15,8 @@ opiods_tidy <- opiods_tidy %>% mutate(total_deaths_pc = total_deaths/Population,
 opiods_tidy %>% arrange(desc(total_deaths_pc)) %>% filter(Population > 10000) %>% View()
 
 # prescriptionnumbers <- read_csv("Senior Fall/CS465/final/prescriptionnumbers.csv")
-prescriptionnumbers<- read_csv("Senior Fall/CS465/hw9-nina-steph-anna/final/prescriptionnumbers.csv")
-deathsbycounty <- read_csv("Senior Fall/CS465/hw9-nina-steph-anna/final/deathsbycounty.csv")
+prescriptionnumbers<- read_csv("Senior Fall/CS465/prescriptionnumbers.csv")
+deathsbycounty <- read_csv("Senior Fall/CS465/deathsbycounty.csv")
 by_race <- read_csv("Senior Fall/CS465/hw9-nina-steph-anna/final/deathsbyrace.csv")
 by_county <- read_csv("Senior Fall/CS465/final/deathsbycounty.csv")
 by_age <- read_csv("Senior Fall/CS465/final/deathsbyage.csv")
@@ -57,3 +57,6 @@ county_prescript_clean <- county_prescript %>% select(1:4, deaths_pc, year, deat
 county_prescript_clean %>% View()
 
 write_csv(county_prescript_clean, "county_deaths.csv")
+
+county_deaths <- county_deaths %>% mutate(DeathsPerCapita = Deaths/Population)
+write_csv(county_deaths, "Senior Fall/CS465/hw9-nina-steph-anna/county_deaths.csv")

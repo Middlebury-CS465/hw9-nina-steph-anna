@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Opiod Deaths MA</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+
+    <style type="text/css">
+
+
+    </style>
+</head>
+<body>
+    <h1>Opiods in Massachusetts</h1>
+    <h4> Nina Sonneborn and Steph Jordan and Anna Novak </h4>
+    <p>This is a description of our project/an intro</p>
+    <div>
+        <p> Text above first vis </p>
+    </div>
+    <svg id="vis1"></svg>
+    <div>
+        <p> Text above second vis </p>
+    </div>
+    <svg id="vis2"></svg>
+    <div>
+        <p> Text above third vis </p>
+    </div>
+    <svg id="vis3"></svg>
+    <div id="tooltip" class="hidden">
+
+      <p>
+        Name: <span id="name"></span><br />
+        Gender: <span id="gender"></span><br />
+
+      </p>
+    </div>
+
+    <script>
+      const margins = {top:10, bottom:60, left:60, right:10};
+      const width = 1000;
+      const height = 600;
+      const url = "https://raw.githubusercontent.com/nsonneborn/ma-opioids-data/master/county_deaths.csv";
+      d3.csv(url).then(function(data){
+        const deathsbygender = {Total:1233,Male:905,Female:328}
+
+        // const deathsbyrace = {
+        //   White: {
+        //     all_deaths: 38765,
+        //     opioid_deaths: 996
+        //   },
+        //   Black: {
+        //     all_deaths: 2006,
+        //     opioid_deaths: 58
+        //   },
+        //   Asian:{
+        //     all_deaths: 893,
+        //     opioid_deaths: 12
+        //   },
+        //   Hispanic:{
+        //     all_deaths: 493,
+        //     opioid_deaths: 143
+        //   },
+        //   Other:{
+        //     all_deaths: 493,
+        //     opioid_deaths: 24
+        //   },
+        //   Total:{
+        //     all_deaths: 43943,
+        //     opioid_deaths: 1233
+        //   }
+        // }
+        const deathsbyrace = {
+          White: 996,
+          Black: 58,
+          Asian: 12,
+          Hispanic: 143,
+          Other: 24
+        }
+
+        // const deathsbyage = {
+        //   "<15": {
+        //     all_deaths: 279,
+        //     opioid_deaths: 0
+        //   },
+        //   "15-24": {
+        //     all_deaths: 313,
+        //     opioid_deaths: 67
+        //   },
+        //   "25-34": {
+        //     all_deaths: 990,
+        //     opioid_deaths: 396
+        //   },
+        //   "35-44":{
+        //     all_deaths: 1124,
+        //     opioid_deaths: 314
+        //   },
+        //   "45-54":{
+        //     all_deaths: 2129,
+        //     opioid_deaths: 263
+        //   },
+        //   "55-64":{
+        //     all_deaths: 4788,
+        //     opioid_deaths: 160
+        //   },
+        //   "65+":{
+        //     all_deaths: 34319,
+        //     opioid_deaths: 33
+        //   },
+        //   "Unknown":{
+        //     all_deaths: 1,
+        //     opioid_deaths: 0
+        //   },
+        //   "Total":{
+        //     all_deaths: 43943,
+        //     opioid_deaths: 1233
+        //   }
+        // }
+
+        const deathsbyage = {
+          "<15": 0,
+          "15-24": 67,
+          "25-34": 396,
+          "35-44": 314,
+          "45-54": 263,
+          "55-64": 160,
+          "65+": 33,
+          "Unknown": 0
+        }
+
+        const vis1_data = [deathsbygender, deathsbyrace, deathsbyage]
+        console.log(vis1_data);
+        console.log(deathsbyage, Object.keys(deathsbyage));
+
+        const genderAsList = []
+        for(i=0; i < deathsbygender.Male; i++){genderAsList.push("M")}
+        for(i=0; i < deathsbygender.Female; i++){genderAsList.push("F")}
+        console.log(genderAsList)
+
+        const ageAsList = []
+        const age_keys = Object.keys(deathsbyage);
+        for(i=0; i < age_keys.length; i++){
+          let current_key = age_keys[i];
+          for(j=0; j < deathsbyage[current_key]; j++){
+            ageAsList.push(current_key);
+          }
+        }
+        console.log(ageAsList)
+
+        const vis1_width = 900;
+        const gridSize = 8;
+        const numPerRow=Math.floor(vis1_width/gridSize)
+
+        const scale = d3.scaleLinear()
+        .domain([0, numPerRow -1])
+        .range([0, gridSize * numPerRow])
+
+        d3.select('#vis1').attr("width", vis1_width + 10)
+        let current = d3.select("#vis1").selectAll(".death_rect")
+          .data(genderAsList)
+
+        let enter_set=current.enter()
+        console.log(enter_set)
+
+
+        enter_set
+        .append("rect")
+        .attr("class", "death_rect")
+        .attr('x', (d, i) => {
+          const n = i % numPerRow
+          return scale(n)
+        })
+
+        .attr('y', (d, i) => {
+          const n = Math.floor(i / numPerRow)+2 // <-D
+          return scale(n)
+        })
+        .attr("height", gridSize+"px")
+        .attr("width", gridSize+"px")
+        .style("fill", function(d){
+          if(d=="M"){
+            return "blue"
+          }
+          return "pink"
+        })
+        .attr("stroke", "white")
+        .attr("stroke-width", "1")
+
+
+      });
+
+
+
+    </script>
+</body>
+</html>
