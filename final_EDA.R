@@ -60,3 +60,5 @@ write_csv(county_prescript_clean, "county_deaths.csv")
 
 county_deaths <- county_deaths %>% mutate(DeathsPerCapita = Deaths/Population)
 write_csv(county_deaths, "Senior Fall/CS465/hw9-nina-steph-anna/county_deaths.csv")
+
+county_deaths %>% ggplot(aes(x= TotalPrescriptions, y = TotalDeathsAllYears)) + geom_point() + geom_smooth(method = "lm")

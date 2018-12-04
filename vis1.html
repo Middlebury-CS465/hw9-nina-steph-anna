@@ -19,6 +19,12 @@
         <p> Text above first vis </p>
     </div>
     <svg id="vis1"></svg>
+    <p id="vis1_caption">
+      Between January and September of 2018, there were <b>1,233</b> opioid-related overdose deaths.
+      ( <span style="background-color: lightgray;">&nbsp; &nbsp;&nbsp;</span> 1 square = 1 death <span style="width:10px;"></span>) <br>
+      Click through to explore the demographic breakdown
+    </p>
+    <button id="vis1_next">Next</button>
     <div>
         <p> Text above second vis </p>
     </div>
@@ -41,153 +47,159 @@
       const width = 1000;
       const height = 600;
       const url = "https://raw.githubusercontent.com/nsonneborn/ma-opioids-data/master/county_deaths.csv";
+
+      // Data shaping for vis1 (squares)
+      const deathsbygender = {Total:1233,Male:905,Female:328}
+      const deathsbyrace = { White: 996, Black: 58, Asian: 12, Hispanic: 143, Other: 24}
+      const deathsbyage = {"<15": 0, "15-24": 67, "25-34": 396,"35-44": 314,
+        "45-54": 263, "55-64": 160, "65+": 33, "Unknown": 0}
+
+      const genderAsList = []
+      for(i=0; i < deathsbygender.Male; i++){genderAsList.push("M")}
+      for(i=0; i < deathsbygender.Female; i++){genderAsList.push("F")}
+
+      const ageAsList = []
+      const age_keys = Object.keys(deathsbyage);
+      for(i=0; i < age_keys.length; i++){
+        let current_key = age_keys[i];
+        for(j=0; j < deathsbyage[current_key]; j++){
+          ageAsList.push(current_key);
+        }
+      }
+
+      const raceAsList = [];
+      const race_keys = Object.keys(deathsbyrace);
+      for(i=0; i < race_keys.length; i++){
+        let current_key = race_keys[i];
+        for(j=0; j < deathsbyrace[current_key]; j++){
+          raceAsList.push(current_key);
+        }
+      }
+
+      const vis1_array = []
+      for(i=0; i <genderAsList.length; i++){
+        vis1_array.push([genderAsList[i], raceAsList[i], ageAsList[i]]);
+      }
+
       d3.csv(url).then(function(data){
-        const deathsbygender = {Total:1233,Male:905,Female:328}
 
-        // const deathsbyrace = {
-        //   White: {
-        //     all_deaths: 38765,
-        //     opioid_deaths: 996
-        //   },
-        //   Black: {
-        //     all_deaths: 2006,
-        //     opioid_deaths: 58
-        //   },
-        //   Asian:{
-        //     all_deaths: 893,
-        //     opioid_deaths: 12
-        //   },
-        //   Hispanic:{
-        //     all_deaths: 493,
-        //     opioid_deaths: 143
-        //   },
-        //   Other:{
-        //     all_deaths: 493,
-        //     opioid_deaths: 24
-        //   },
-        //   Total:{
-        //     all_deaths: 43943,
-        //     opioid_deaths: 1233
-        //   }
-        // }
-        const deathsbyrace = {
-          White: 996,
-          Black: 58,
-          Asian: 12,
-          Hispanic: 143,
-          Other: 24
-        }
-
-        // const deathsbyage = {
-        //   "<15": {
-        //     all_deaths: 279,
-        //     opioid_deaths: 0
-        //   },
-        //   "15-24": {
-        //     all_deaths: 313,
-        //     opioid_deaths: 67
-        //   },
-        //   "25-34": {
-        //     all_deaths: 990,
-        //     opioid_deaths: 396
-        //   },
-        //   "35-44":{
-        //     all_deaths: 1124,
-        //     opioid_deaths: 314
-        //   },
-        //   "45-54":{
-        //     all_deaths: 2129,
-        //     opioid_deaths: 263
-        //   },
-        //   "55-64":{
-        //     all_deaths: 4788,
-        //     opioid_deaths: 160
-        //   },
-        //   "65+":{
-        //     all_deaths: 34319,
-        //     opioid_deaths: 33
-        //   },
-        //   "Unknown":{
-        //     all_deaths: 1,
-        //     opioid_deaths: 0
-        //   },
-        //   "Total":{
-        //     all_deaths: 43943,
-        //     opioid_deaths: 1233
-        //   }
-        // }
-
-        const deathsbyage = {
-          "<15": 0,
-          "15-24": 67,
-          "25-34": 396,
-          "35-44": 314,
-          "45-54": 263,
-          "55-64": 160,
-          "65+": 33,
-          "Unknown": 0
-        }
-
-        const vis1_data = [deathsbygender, deathsbyrace, deathsbyage]
-        console.log(vis1_data);
-        console.log(deathsbyage, Object.keys(deathsbyage));
-
-        const genderAsList = []
-        for(i=0; i < deathsbygender.Male; i++){genderAsList.push("M")}
-        for(i=0; i < deathsbygender.Female; i++){genderAsList.push("F")}
-        console.log(genderAsList)
-
-        const ageAsList = []
-        const age_keys = Object.keys(deathsbyage);
-        for(i=0; i < age_keys.length; i++){
-          let current_key = age_keys[i];
-          for(j=0; j < deathsbyage[current_key]; j++){
-            ageAsList.push(current_key);
-          }
-        }
-        console.log(ageAsList)
+        console.log(vis1_array)
 
         const vis1_width = 900;
+        const vis1_height = 120;
         const gridSize = 8;
         const numPerRow=Math.floor(vis1_width/gridSize)
 
-        const scale = d3.scaleLinear()
+        const grid_scale = d3.scaleLinear()
         .domain([0, numPerRow -1])
         .range([0, gridSize * numPerRow])
 
-        d3.select('#vis1').attr("width", vis1_width + 10)
+        d3.select('#vis1').attr("width", vis1_width + 10).attr("height", vis1_height)
         let current = d3.select("#vis1").selectAll(".death_rect")
-          .data(genderAsList)
+          .data(vis1_array)
 
         let enter_set=current.enter()
-        console.log(enter_set)
 
+        enter_set.append("rect")
+          .attr("class", "death_rect")
+          .attr('x', (d, i) => {
+            const n = i % numPerRow
+            return grid_scale(n)
+          })
 
-        enter_set
-        .append("rect")
-        .attr("class", "death_rect")
-        .attr('x', (d, i) => {
-          const n = i % numPerRow
-          return scale(n)
-        })
+          .attr('y', (d, i) => {
+            const n = Math.floor(i / numPerRow)+2 // <-D
+            return grid_scale(n)
+          })
+          .attr("height", gridSize+"px")
+          .attr("width", gridSize+"px")
+          .style("fill", "lightgray")
+          .attr("stroke", "white")
+          .attr("stroke-width", "1")
 
-        .attr('y', (d, i) => {
-          const n = Math.floor(i / numPerRow)+2 // <-D
-          return scale(n)
-        })
-        .attr("height", gridSize+"px")
-        .attr("width", gridSize+"px")
-        .style("fill", function(d){
-          if(d=="M"){
-            return "blue"
+        // color functions for squares
+        const gridColors = {
+          "M": "blue",
+          "F":"pink",
+          "White": "#bababa",
+          "Black": "#404040",
+          "Asian": "#f4a582",
+          "Hispanic": "#ca0020",
+          "Other": "lightpurple",
+          "15-24": "#fef0d9",
+          "25-34": "#fdd49e",
+          "35-44": "#fdbb84",
+          "45-54": "#fc8d59",
+          "55-64": "#e34a33",
+          "65+": "#e34a33"
+        }
+
+        const updateGridColors = function(index){
+          d3.selectAll('.death_rect')
+            .style("fill", (d) => gridColors[d[index]]);//.style
+        }//updateGridColors
+
+        const gridCaptions = [
+          // "Between January and September of 2018, there were <b>1,233</b> opioid-related overdose deaths." +
+          // "( <span style='background-color: lightgray;'>&nbsp; &nbsp;&nbsp;</span>"+
+          // "1 square = 1 death <span style='width:10px;'></span>) <br>" +
+          // "Click through to explore the demographic breakdown",
+
+          //Gender
+          "<span style='color: blue;'> 73% </span> of the victims of deadly overdoses were <span style='color: blue;'> male </span>" +
+          ", while the remaining <span style='color: pink;'>27%</span> were <span style='color: pink;'>female</span> <br><br>" +
+          " <span style='background-color: blue;'>&nbsp; &nbsp;&nbsp;</span> Male" +
+          " <span style='background-color: pink;'>&nbsp; &nbsp;&nbsp;</span> Female",
+
+          //Race
+          // white non-hispanic: 81% of deaths, 72% of population
+          // Hispanic: < 1 % but 7% of population
+          // Black: 4% but 8.8% of population
+          "Looking at the breakdown by race, we can see that this is affecting white males the most. "+
+          "While 72.1 of Massachusetts residents are White (Non-Hispanic), "+
+          "<span style='color:" + gridColors["White"] + "'> <b>81% of opioid overdose victims</b></span> are white. <br>" +
+          "Compare this to Hispanics, which make up 7% of the MA population but less than 1% of opioid deaths. <br><br>" +
+          " <span style='background-color:" + gridColors["White"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " White &nbsp;&nbsp;" +
+          " <span style='background-color:" + gridColors["Black"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Black &nbsp;&nbsp;" +
+          " <span style='background-color:" + gridColors["Asian"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Asian &nbsp;&nbsp;" +
+          " <span style='background-color:" + gridColors["Hispanic"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Hispanic &nbsp;&nbsp;" +
+          " <span style='background-color:" + gridColors["Other"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Other/Unknown &nbsp;&nbsp;",
+          // Age
+          "We can also see the age of these victims is relatively spread, though affecting those under 24 and over 55 less often. " +
+          "However, it's important to note the implications of these numbers. <br>"+
+          "<b>58%</b> of all deaths of Massachusetts residents between the ages of <b>25 and 44</b> were caused by opioids, " +
+          "compared to 34% for those aged 45-64 <br><br>" +
+          " <span style='background-color:" + gridColors["15-24"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 15-24 &nbsp;&nbsp;" +
+          " <span style='background-color:" + gridColors["25-34"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 25-34 &nbsp;&nbsp;" +
+          " <span style='background-color:" + gridColors["35-44"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 35-44 &nbsp;&nbsp;" +
+          " <span style='background-color:" + gridColors["45-54"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 45-54 &nbsp;&nbsp;" +
+          " <span style='background-color:" + gridColors["55-64"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 55-64 &nbsp;&nbsp;" +
+          " <span style='background-color:" + gridColors["65+"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 65+"
+        ]
+
+        const updateGridCaption = function(index){
+          d3.select('#vis1_caption').html(gridCaptions[index]);
+        }
+
+        let vis1_index = 0;
+        d3.select('#vis1_next').on("click", function(){
+          if(vis1_index < 3){
+            updateGridColors(vis1_index);
+            updateGridCaption(vis1_index);
+            if(vis1_index === 2){
+              d3.select('#vis1_next').html("Restart")
+            }
+            vis1_index = vis1_index + 1;
+
+          } else {
+            vis1_index = 0;
+            updateGridColors(vis1_index);
+            updateGridCaption(vis1_index)
+            d3.select('#vis1_next').html("Next")
           }
-          return "pink"
+
         })
-        .attr("stroke", "white")
-        .attr("stroke-width", "1")
-
-
-      });
+      }); //d3.csv.then
 
 
 
