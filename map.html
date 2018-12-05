@@ -51,6 +51,26 @@
     #tooltip.hidden{
     display:none;
     }
+    #tooltipCityMap{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #tooltipCityMap p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #tooltipCityMap.hidden{
+      display:none;
+    }
 
     </style>
 </head>
@@ -96,7 +116,14 @@
       </p>
     </div>
 
+    <div id="tooltipCityMap" class="hidden">
 
+      <p>
+        City: <span id="name"></span><br />
+
+        Population: <span id="pop"></span><br />
+      </p>
+    </div>
     <script>
     const margins = {top:10, bottom:60, left:90, right:20};
     const width = 1000;
@@ -157,15 +184,7 @@
     const town_plot = chart5.append("g")
       .attr("transform", `translate(${margins.left}, ${margins.top})`);
 
-    town_plot.append("text")
-      .attr("text-anchor", "middle")
-      .attr("transform", `translate(${width/2}, ${height+margins.bottom-10})`)
-      .text("Year");
 
-    town_plot.append("text")
-      .attr("text-anchor", "middle")
-      .attr("transform", `translate(${-(margins.left/1.5)}, ${height/2})rotate(-90)`)
-      .text("Deaths per Capita");
 
 
 
@@ -292,20 +311,8 @@
       console.log(d3.extent(townData, (d,i) => +d.values[i]))
       //set x and y scales for chart5 (town plot)
       /* FIX DOMAIN. How to get max of all Deaths??*/
-      const x_scale_town = d3.scaleLinear()
-          .range([0, width])
-          .domain([2013, 2017]);//d3.max(townData, (d,i) => +d.values[i].Year)]);
 
-      const y_scale_town = d3.scaleLinear()
-           .range([height, 0])
-           .domain([0, 200]); //d3.max(townData, (d,i) => +d.values[i].Deaths)]);
 
-      const x_axis_town = town_plot.append("g")
-          .attr("transform", `translate(0, ${height})`)
-          .call(d3.axisBottom(x_scale_town));
-
-      const y_axis_town = town_plot.append("g")
-          .call(d3.axisLeft(y_scale_town));
 
 
 
@@ -346,37 +353,121 @@
        (clicked on map)
       **/
       const update_town_vis = function() {
-
+        names=[];
+        const key = chart5.append("g")
+        .attr("transform", `translate(${5}, ${margins.top})`);
         // Filter townData to just the selectedCounty
         let filtered_town_data = townData.filter((d) => d.key == selectedCounty)[0].values
+        const data= d3.nest()
+          .key(function(d) { return d.City; })
+          .map(filtered_town_data);
+        for (i=0; i<filtered_town_data.length; i++){
 
+          const name=filtered_town_data[i].City;
+          console.log(name);
+          const selected=data.get(name);
+          console.log(selected);
+          const name_obj = {name:name, data:selected, color: null};
+          names.push(name_obj)
+        }
         console.log(filtered_town_data);
+        var x_scale = d3.scaleLinear()
+          .range([0,width])
+          .domain([2013, 2017])
 
-      //  console.log("is this different")
-      //  console.log(filtered_town_data[0].values);
-        // Update the points of town_plot to reflect filtered data
+        var y_scale = d3.scaleLinear()
+          .range([height, 0])
+          .domain([0,10]);
 
-/*
-        town_lines = town_plot.selectAll(".line")
-          .data(filtered_town_data, (d) => d);
+        let colorScale= d3.scaleOrdinal()
+        .range(["red", "green", "blue", "orange", "yellow", "purple", "pink", "indigo","#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+        const line = d3.line()
+          .x(function(d){
+
+            return x_scale(+d["Year"])}
+          )
+          .y(function(d){
+
+            return y_scale(+d["Deaths"])}
+          )
+
+          //current set
+          let current=town_plot.selectAll(".namelines")
+            .data(names, (d)=>d)
 
 
-          .enter()
-          .append("path")
-          .attr("class", "line")
-          .attr("r", 3);
+          //exit set
+          current.exit().remove();
+
+          //enter set
+          let new_lines=current.enter()
+                .append("path")
+                .attr("class", "namelines")
+                .on('mouseover', function(d){
+
+                  const tooltip=d3.select("#tooltipCityMap");
+
+                  tooltip.classed("hidden", false);
+
+                  d3.select("#name").text(d.name);
+
+                  d3.select("#pop").text(+d.data[0]["Population"]);
 
 
-          let new_town_lines = lines.enter()
-            .append("path")
-            .attr("stroke", "black"
-            .attr("fill", "none")
-            .attr("d", (d)=>line(d.data))
-            .attr("class", "line");
+                  const coordinates = [d3.event.pageX, d3.event.pageY];
 
-          lines = lines.merge(new_lines);
-*/
+                  tooltip.style("left", (coordinates[0]+25) + "px");
+                  tooltip.style("top", (coordinates[1]+25) + "px");
 
+
+                })
+                .on('mouseout', function(d){
+                  const tooltip=d3.select("#tooltipCityMap");
+                  tooltip.classed("hidden", true);
+                })
+
+
+
+          current=current.merge(new_lines);
+
+          current.attr("d", function(d){
+
+              return line(d.data);
+          })
+          .style("stroke", function(d,i){
+
+            return colorScale(i)})
+          .style("fill", "none")
+          .attr('stroke-width', function(d) {
+              if (d.name==="Average"){
+
+                return 3;
+              }
+              else{
+
+                return 1;
+              }
+
+           })
+
+           town_plot.append("text")
+             .attr("text-anchor", "middle")
+             .attr("transform", `translate(${width/2}, ${height+margins.bottom-10})`)
+             .text("Year");
+
+           town_plot.append("text")
+             .attr("text-anchor", "middle")
+             .attr("transform", `translate(${-(margins.left/1.5)}, ${height/2})rotate(-90)`)
+             .text("Deaths per Capita");
+
+
+                const x_axis_town = town_plot.append("g")
+                    .attr("transform", `translate(0, ${height})`)
+                    .call(d3.axisBottom(x_scale).tickFormat(d3.format("d")))
+
+                const y_axis_town = town_plot.append("g")
+                    .call(d3.axisLeft(y_scale));
       }
 
 
