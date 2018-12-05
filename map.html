@@ -307,17 +307,6 @@
       });
 
 
-      console.log(townData[0].values[0].Deaths)
-      console.log(d3.extent(townData, (d,i) => +d.values[i]))
-      //set x and y scales for chart5 (town plot)
-      /* FIX DOMAIN. How to get max of all Deaths??*/
-
-
-
-
-
-
-
       //event handlers
       counties.on("mouseover", function(d){
         const coordinates = [d3.event.pageX, d3.event.pageY];
@@ -361,23 +350,26 @@
         const data= d3.nest()
           .key(function(d) { return d.City; })
           .map(filtered_town_data);
-        for (i=0; i<filtered_town_data.length; i++){
 
-          const name=filtered_town_data[i].City;
-          console.log(name);
+        let cities=data.keys();
+
+        for (i=0; i<data.size(); i++){
+
+          const name=cities[i];
+
           const selected=data.get(name);
-          console.log(selected);
+
           const name_obj = {name:name, data:selected, color: null};
           names.push(name_obj)
         }
-        console.log(filtered_town_data);
+
         var x_scale = d3.scaleLinear()
           .range([0,width])
           .domain([2013, 2017])
 
         var y_scale = d3.scaleLinear()
           .range([height, 0])
-          .domain([0,10]);
+          .domain([0,0.005]);
 
         let colorScale= d3.scaleOrdinal()
         .range(["red", "green", "blue", "orange", "yellow", "purple", "pink", "indigo","#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
@@ -389,7 +381,7 @@
           )
           .y(function(d){
 
-            return y_scale(+d["Deaths"])}
+            return y_scale(+d["DeathsPC"])}
           )
 
           //current set
@@ -462,12 +454,12 @@
              .text("Deaths per Capita");
 
 
-                const x_axis_town = town_plot.append("g")
-                    .attr("transform", `translate(0, ${height})`)
-                    .call(d3.axisBottom(x_scale).tickFormat(d3.format("d")))
+            const x_axis_town = town_plot.append("g")
+                .attr("transform", `translate(0, ${height})`)
+                .call(d3.axisBottom(x_scale).tickFormat(d3.format("d")))
 
-                const y_axis_town = town_plot.append("g")
-                    .call(d3.axisLeft(y_scale));
+            const y_axis_town = town_plot.append("g")
+                .call(d3.axisLeft(y_scale));
       }
 
 
