@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Opiod Deaths MA</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+
+    <style type="text/css">
+
+    #mapTooltip{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #mapTooltip p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #mapTooltip.hidden{
+    display:none;
+    }
+
+
+    #tooltip{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #tooltip p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #tooltip.hidden{
+    display:none;
+    }
+
+    </style>
+</head>
+<body>
+    <h1>Opiods in Massachusetts</h1>
+    <h4> Nina Sonneborn and Steph Jordan and Anna Novak </h4>
+    <p>This is a description of our project/an intro</p>
+    <div>
+        <p> Text above first vis </p>
+    </div>
+    <svg id="vis1"></svg>
+    <div>
+        <p> Text above second vis </p>
+    </div>
+    <svg id="vis2"></svg>
+    <div>
+        <p> Text above third vis </p>
+    </div>
+    <svg id="vis3"></svg>
+    <div>
+      <p> Map shows Massachusetts counties colored by deaths per capita. needs a key, label Boston </p>
+    </div>
+    <svg id="vis4"></svg>
+    <div>
+      <p> Scatterplot shows deaths per capita plotted on year, colored by town name
+        (colors on same scale as map?) (fixed axes?)</p>
+      </div>
+      <svg id ="vis5"></svg>
+
+
+    <div id="mapTooltip" class="hidden">
+      <p>
+        <span id="countyname"></span> County <br />
+        Total deaths: <span id="deaths"></span><br />
+      </p>
+    </div>
+
+    <div id="tooltip" class="hidden">
+      <p>
+        <span id="countyname_tooltip"></span> County <br />
+        <span id="prescriptions_tooltip"></span> prescriptions <br />
+        <span id="deaths_tooltip"></span> total deaths <br />
+      </p>
+    </div>
+
+
+    <script>
+    const margins = {top:10, bottom:60, left:90, right:20};
+    const width = 1000;
+    const height = 600;
+
+// Set up Prescrip vs. Deaths by County scatterplot
+    const chart3 = d3.select("#vis3")
+        .attr("width", width + margins.right + margins.left)
+        .attr("height", height + margins.top + margins.bottom);
+
+    const scatterplot = chart3.append("g")
+        .attr("transform", `translate(${margins.left}, ${margins.top})`);
+
+    scatterplot.append("text")
+      .attr("text-anchor", "middle")
+      .attr("transform", `translate(${width/2}, ${height+margins.bottom-10})`)
+      .text("Schedule II Opioid Prescriptions (Total, 2013 - 2017)");
+
+    scatterplot.append("text")
+      .attr("text-anchor", "middle")
+      .attr("transform", `translate(${-(margins.left/1.5)}, ${height/2})rotate(-90)`)
+      .text("Opioid Related Deaths (total 2013-2017)");
+
+
+// Set up map
+    const chart4 = d3.select("#vis4")
+        .attr("width", width + margins.right + margins.left)
+        .attr("height", height + margins.top + margins.bottom);
+
+    const map = chart4.append("g")
+        .attr("transform", `translate(${margins.left}, ${margins.top})`);
+
+    // create projection to map from lat,lon data to x,y, coordinates
+    // Center on Massachusetts
+    const projection = d3.geoAlbers()
+      .scale( 19000 )
+      .rotate( [71.057,0] )
+      .center( [-0.5, 42.15] )
+      .translate( [width/2,height/2] );
+
+    //create path tool to translate GeoJSON into SVG path data
+    const mapPath = d3.geoPath().projection(projection);
+
+    //create coloring tool
+    const color_scale = d3.scaleQuantize()
+      .range(colorbrewer.YlGnBu[8]); //YlOrBr
+
+    //the metric we are showing: (so far this does not change)
+    let metric = "TotalDeathsPerCapita";
+
+
+
+// Set up Deathspc per year by Town Scatterplot
+    const chart5 = d3.select("#vis5")
+      .attr("width", width + margins.right + margins.left)
+      .attr("height", height + margins.top + margins.bottom);
+
+    const town_plot = chart5.append("g")
+      .attr("transform", `translate(${margins.left}, ${margins.top})`);
+
+    town_plot.append("text")
+      .attr("text-anchor", "middle")
+      .attr("transform", `translate(${width/2}, ${height+margins.bottom-10})`)
+      .text("Year");
+
+    town_plot.append("text")
+      .attr("text-anchor", "middle")
+      .attr("transform", `translate(${-(margins.left/1.5)}, ${height/2})rotate(-90)`)
+      .text("Deaths per Capita");
+
+
+
+// Load data
+    Promise.all([
+    d3.csv("county_deaths.csv"),
+    d3.csv("city_deaths.csv"),
+    d3.json("mass_counties.json")
+  ]).then(function(data){
+
+    const county_data = data[0];
+    const town_data = data[1];
+    const map_data = data[2];
+
+    let selectedCounty = "Barnstable";
+
+    console.log(town_data);
+
+    //convert from TopoJSON to GeoJSON
+    const ma_counties = topojson.feature(map_data, map_data.objects.mass_counties);
+
+    // set domain of map color scale
+    color_scale.domain(d3.extent(county_data, (d) => +d[metric]));
+
+    // nest the county level data
+    let countyData = d3.nest()
+      .key((d) => d.County)
+      .entries(county_data);
+
+    //nest the town level data
+    let townData = d3.nest()
+      .key((d) => d.County)
+      .entries(town_data);
+
+    console.log(townData);
+
+    // x and y scales for chart3 (county scatterplot)
+      const x_scale = d3.scaleLinear()
+          .range([0, width])
+          .domain([0, d3.max(countyData, (d) => +d.values[0].TotalPrescriptions)]);
+
+      const y_scale = d3.scaleLinear()
+           .range([height, 0])
+           .domain([0, d3.max(countyData, (d) => +d.values[0].TotalDeathsAllYears)]);
+
+      const x_axis = scatterplot.append("g")
+          .attr("transform", `translate(0, ${height})`)
+          .call(d3.axisBottom(x_scale));
+
+      const y_axis = scatterplot.append("g")
+          .call(d3.axisLeft(y_scale));
+
+      //Create scatterplot points, bind nested countyData
+      let points = scatterplot.selectAll(".newPoints")
+      .data(countyData, (d) => d)
+      .enter()
+      .append("circle")
+      .attr("class", "newPoints")
+      .attr("cx", (d) => x_scale(+d.values[0].TotalPrescriptions))
+      .attr("cy", (d) => y_scale(+d.values[0].TotalDeathsAllYears))
+      .attr("r", 6) // (d) => (+d.values[0].Population) * .000001
+      .style("fill", color_scale(.0025));
+
+      points.on("mouseover", function(d){
+        const coordinates = [d3.event.pageX, d3.event.pageY];
+
+      d3.select("#tooltip")
+        .style("left", (coordinates[0]+25) + "px")
+        .style("top", (coordinates[1]+10) + "px")
+        .classed("hidden", false);
+
+      d3.select("#countyname_tooltip").text(d.key);
+      d3.select("#prescriptions_tooltip").text(d.values[0].TotalPrescriptions);
+      d3.select("#deaths_tooltip").text(d.values[0].TotalDeathsAllYears);
+
+      });
+
+      points.on("mouseout", function(d) {
+        d3.select("#tooltip").classed("hidden", true)
+      });
+
+       // Add regression line to scatterplot
+       // y = (.03156)x - 100.1
+       scatterplot.append("line")
+          .attr("x1", x_scale(0))
+          .attr("x2", x_scale(91295))
+          .attr("y1", y_scale(-100.1))
+          .attr("y2", y_scale(.03156 * 91295 - 100.1))
+          .style("stroke", "lightgray")
+
+
+
+
+      // create map of countyData, so we can easily find records for a particular county
+      const county_map = d3.map();
+      countyData.forEach((d) => {county_map.set(d.values[0].County, d.values[0])});
+
+
+      //Loop through all of the path data, attaching appropriate record to each one
+      for (let i = 0; i < ma_counties.features.length; i++) {
+        let name = ma_counties.features[i].properties.NAME;
+        ma_counties.features[i].properties.value = county_map.get(name);
+      }
+
+      //create the counties in the map SVG
+      const counties = map.selectAll("path")
+        .data(ma_counties.features, (d) => d)
+        .enter()
+        .append("path")
+        .attr("d", mapPath)
+        .attr("class", "county");
+
+      //style each county to set fill color based on metric
+      counties.style("fill", function(d) {
+        if (d.properties.value) {
+          return color_scale(+d.properties.value[metric]);
+        } else{
+          return "red";
+        }
+      });
+
+
+      console.log(townData[0].values[0].Deaths)
+      console.log(d3.extent(townData, (d,i) => +d.values[i]))
+      //set x and y scales for chart5 (town plot)
+      /* FIX DOMAIN. How to get max of all Deaths??*/
+      const x_scale_town = d3.scaleLinear()
+          .range([0, width])
+          .domain([2013, 2017]);//d3.max(townData, (d,i) => +d.values[i].Year)]);
+
+      const y_scale_town = d3.scaleLinear()
+           .range([height, 0])
+           .domain([0, 200]); //d3.max(townData, (d,i) => +d.values[i].Deaths)]);
+
+      const x_axis_town = town_plot.append("g")
+          .attr("transform", `translate(0, ${height})`)
+          .call(d3.axisBottom(x_scale_town));
+
+      const y_axis_town = town_plot.append("g")
+          .call(d3.axisLeft(y_scale_town));
+
+
+
+
+
+      //event handlers
+      counties.on("mouseover", function(d){
+        const coordinates = [d3.event.pageX, d3.event.pageY];
+
+        d3.select("#mapTooltip")
+          .style("left", (coordinates[0]+25) + "px")
+          .style("top", (coordinates[1]+10) + "px")
+          .classed("hidden", false);
+
+        d3.select("#countyname").text(d.properties.value.County);
+        d3.select("#deaths").text(+d.properties.value.TotalDeathsAllYears);
+      });
+
+      counties.on("mouseout", function(d) {
+      //  console.log("mouseout")
+        d3.select("#mapTooltip").classed("hidden", true)
+      });
+
+      // Clicking a county on the map updates the final scatterplot
+      counties.on("click", function(item_data) {
+
+        selectedCounty = item_data.properties.NAME;
+
+        update_town_vis();
+
+      });
+
+
+
+
+      /**
+       Function to update final scatterplot (chart5) based on user selected county.
+       (clicked on map)
+      **/
+      const update_town_vis = function() {
+
+        // Filter townData to just the selectedCounty
+        let filtered_town_data = townData.filter((d) => d.key == selectedCounty)[0].values
+
+        console.log(filtered_town_data);
+
+      //  console.log("is this different")
+      //  console.log(filtered_town_data[0].values);
+        // Update the points of town_plot to reflect filtered data
+
+/*
+        town_lines = town_plot.selectAll(".line")
+          .data(filtered_town_data, (d) => d);
+
+
+          .enter()
+          .append("path")
+          .attr("class", "line")
+          .attr("r", 3);
+
+
+          let new_town_lines = lines.enter()
+            .append("path")
+            .attr("stroke", "black"
+            .attr("fill", "none")
+            .attr("d", (d)=>line(d.data))
+            .attr("class", "line");
+
+          lines = lines.merge(new_lines);
+*/
+
+      }
+
+
+
+  });
+
+
+
+    </script>
+</body>
+</html>
