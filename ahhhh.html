@@ -232,22 +232,25 @@
     const town_width = 250;
     const town_height = 250;
 
+    const scatter_width = 400;
+    const scatter_height = 400;
+
 // Set up Prescrip vs. Deaths by County scatterplot
     const chart3 = d3.select("#vis3")
-        .attr("width", width + margins.right + margins.left)
-        .attr("height", height + margins.top + margins.bottom);
+        .attr("width", scatter_width + margins.right + margins.left)
+        .attr("height", scatter_height + margins.top + margins.bottom);
 
     const scatterplot = chart3.append("g")
         .attr("transform", `translate(${margins.left}, ${margins.top})`);
 
     scatterplot.append("text")
       .attr("text-anchor", "middle")
-      .attr("transform", `translate(${width/2}, ${height+margins.bottom-10})`)
+      .attr("transform", `translate(${scatter_width/2}, ${scatter_height+margins.bottom-10})`)
       .text("Schedule II Opioid Prescriptions (Total, 2013 - 2017)");
 
     scatterplot.append("text")
       .attr("text-anchor", "middle")
-      .attr("transform", `translate(${-(margins.left/1.5)}, ${height/2})rotate(-90)`)
+      .attr("transform", `translate(${-(margins.left/1.5)}, ${scatter_height/2})rotate(-90)`)
       .text("Opioid Related Deaths (total 2013-2017)");
 
 
@@ -326,15 +329,15 @@
 
     // x and y scales for chart3 (county scatterplot)
       const x_scale = d3.scaleLinear()
-          .range([0, width])
+          .range([0, scatter_width])
           .domain([0, d3.max(countyData, (d) => +d.values[0].TotalPrescriptions)]);
 
       const y_scale = d3.scaleLinear()
-           .range([height, 0])
+           .range([scatter_height, 0])
            .domain([0, d3.max(countyData, (d) => +d.values[0].TotalDeathsAllYears)]);
 
       const x_axis = scatterplot.append("g")
-          .attr("transform", `translate(0, ${height})`)
+          .attr("transform", `translate(0, ${scatter_height})`)
           .call(d3.axisBottom(x_scale));
 
       const y_axis = scatterplot.append("g")
@@ -398,16 +401,17 @@
         .enter()
         .append("path")
         .attr("d", mapPath)
-        .attr("class", ".county-borders");
+        .attr("class", "county-borders");
 
       //style each county to set fill color based on metric
-      counties.style("fill", function(d) {
-        if (d.properties.value) {
-          return color_scale(+d.properties.value[metric]);
-        } else{
-          return "red";
-        }
-      });
+      counties.style("stroke", "lightgray")
+        .style("fill", function(d) {
+          if (d.properties.value) {
+            return color_scale(+d.properties.value[metric]);
+          } else{
+            return "red";
+          }
+        });
 
       //event handlers
       counties.on("mouseover", function(d){
@@ -418,13 +422,16 @@
           .style("top", (coordinates[1]+10) + "px")
           .classed("hidden", false);
 
+        d3.select(this).style("fill-opacity", .7)
+
         d3.select("#countyname").text(d.properties.value.County);
         d3.select("#deaths").text(+d.properties.value.TotalDeathsAllYears);
       });
 
       counties.on("mouseout", function(d) {
-      //  console.log("mouseout")
+        console.log("moustout")
         d3.select("#mapTooltip").classed("hidden", true)
+        d3.selectAll(".county-borders").style("fill-opacity", 1);
       });
 
       // Clicking a county on the map updates the final scatterplot
@@ -438,7 +445,7 @@
 
 
       /**
-       Function to update final scatterplot (chart5) based on user selected county.
+       Function to update final scatterplot based on user selected county.
        (clicked on map)
       **/
       var x_scale3 = d3.scaleLinear()

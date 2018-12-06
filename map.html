@@ -91,14 +91,13 @@
     </div>
     <svg id="vis3"></svg>
     <div>
-      <p> Map shows Massachusetts counties colored by deaths per capita. needs a key, label Boston </p>
+      <p> Map shows Massachusetts counties colored by deaths per capita. needs a key, label Boston
+        Scatterplot shows deaths per capita plotted on year, colored by town name
+          (colors on same scale as map?) (fixed axes?) </p>
     </div>
     <svg id="vis4"></svg>
-    <div>
-      <p> Scatterplot shows deaths per capita plotted on year, colored by town name
-        (colors on same scale as map?) (fixed axes?)</p>
-      </div>
-      <svg id ="vis5"></svg>
+
+    <svg id ="vis5"></svg>
 
 
     <div id="mapTooltip" class="hidden">
@@ -128,8 +127,8 @@
     const margins = {top:10, bottom:60, left:90, right:20};
     const width = 1000;
     const height = 600;
-    const town_width = 300;
-    const town_height = 300;
+    const town_width = 250;
+    const town_height = 250;
 
 // Set up Prescrip vs. Deaths by County scatterplot
     const chart3 = d3.select("#vis3")
@@ -163,7 +162,7 @@
     const projection = d3.geoAlbers()
       .scale( 19000 )
       .rotate( [71.057,0] )
-      .center( [-0.5, 42.15] )
+      .center( [-0.5, 41.95] ) //42.15
       .translate( [width/2,height/2] );
 
     //create path tool to translate GeoJSON into SVG path data
@@ -183,8 +182,8 @@
       .attr("width", town_width + margins.right + margins.left)
       .attr("height", town_height + margins.top + margins.bottom);
 
-    const town_plot = chart5.append("g")
-      .attr("transform", `translate(${margins.left}, ${margins.top})`);
+    const town_plot = chart4.append("g")
+      .attr("transform", `translate(300, 350)`);
 
 
 
@@ -291,6 +290,7 @@
       //Loop through all of the path data, attaching appropriate record to each one
       for (let i = 0; i < ma_counties.features.length; i++) {
         let name = ma_counties.features[i].properties.NAME;
+
         ma_counties.features[i].properties.value = county_map.get(name);
       }
 
@@ -380,8 +380,8 @@
       **/
       const update_town_vis = function() {
         names=[];
-        const key = chart5.append("g")
-        .attr("transform", `translate(${5}, ${margins.top})`);
+
+
         // Filter townData to just the selectedCounty
         let filtered_town_data = townData.filter((d) => d.key == selectedCounty)[0].values
         const data= d3.nest()
@@ -491,6 +491,14 @@
              .text("Deaths per Capita");
 
 
+          let town_plot_title = town_plot.append("text")
+              .attr("text-anchor", "middle")
+              .attr("transform", `translate(${town_width/2}, 10)`)
+              .text("Title");
+
+          town_plot_title.text("Towns in " + String(selectedCounty) + " County")
+
+
             const x_axis_town = town_plot.append("g")
                 .attr("transform", `translate(0, ${town_height})`)
                 .call(d3.axisBottom(x_scale).tickFormat(d3.format("d")))
@@ -498,7 +506,6 @@
             const y_axis_town = town_plot.append("g")
                 .call(d3.axisLeft(y_scale));
       }
-
 
 
   });
