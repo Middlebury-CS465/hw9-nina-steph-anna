@@ -128,6 +128,8 @@
     const margins = {top:10, bottom:60, left:90, right:20};
     const width = 1000;
     const height = 600;
+    const town_width = 300;
+    const town_height = 300;
 
 // Set up Prescrip vs. Deaths by County scatterplot
     const chart3 = d3.select("#vis3")
@@ -176,10 +178,10 @@
 
 
 
-// Set up Deathspc per year by Town Scatterplot
+// Set up DeathsPerCapita per year by Town Scatterplot
     const chart5 = d3.select("#vis5")
-      .attr("width", width + margins.right + margins.left)
-      .attr("height", height + margins.top + margins.bottom);
+      .attr("width", town_width + margins.right + margins.left)
+      .attr("height", town_height + margins.top + margins.bottom);
 
     const town_plot = chart5.append("g")
       .attr("transform", `translate(${margins.left}, ${margins.top})`);
@@ -192,19 +194,22 @@
     Promise.all([
     d3.csv("county_deaths.csv"),
     d3.csv("city_deaths.csv"),
-    d3.json("mass_counties.json")
+    d3.json("mass_counties.json"),
+    d3.json("mass_towns.json")
   ]).then(function(data){
 
     const county_data = data[0];
     const town_data = data[1];
-    const map_data = data[2];
+    const county_map_data = data[2];
+    const town_map_data = data[3];
 
     let selectedCounty = "Barnstable";
 
-    console.log(town_data);
+    //convert map data from TopoJSON to GeoJSON
+    const ma_counties = topojson.feature(county_map_data, county_map_data.objects.mass_counties);
+    const ma_towns = topojson.feature(town_map_data, town_map_data.objects.ma_towns);
 
-    //convert from TopoJSON to GeoJSON
-    const ma_counties = topojson.feature(map_data, map_data.objects.mass_counties);
+    console.log(ma_towns);
 
     // set domain of map color scale
     color_scale.domain(d3.extent(county_data, (d) => +d[metric]));
@@ -290,12 +295,12 @@
       }
 
       //create the counties in the map SVG
-      const counties = map.selectAll("path")
+      const counties = map.selectAll(".county-borders")
         .data(ma_counties.features, (d) => d)
         .enter()
         .append("path")
         .attr("d", mapPath)
-        .attr("class", "county");
+        .attr("class", ".county-borders");
 
       //style each county to set fill color based on metric
       counties.style("fill", function(d) {
@@ -305,6 +310,38 @@
           return "red";
         }
       });
+
+/*
+      // Add town layer to map
+      // create map of townData, so we can easily find records for a particular town
+      const town_map = d3.map();
+      townData.forEach((d) => {town_map.set(d.values[0].City, d.values[0])});
+      console.log(townData[0].values[0].City)
+
+      //Loop through all of the path data, attaching appropriate record to each one
+      for (let i = 0; i < ma_towns.features.length; i++) {
+        let name = ma_towns.features[i].properties.TOWN;
+      //  console.log(name);
+      //  console.log(town_map.get(name));
+        ma_towns.features[i].properties.value = town_map.get(name);
+//console.log(ma_towns.features[i].properties.value);
+      }
+
+      //create the towns in the map SVG
+      const towns = map.selectAll(".town-borders")
+        .data(ma_towns.features, (d) => d)
+        .enter()
+        .append("path")
+        .attr("d", mapPath)
+        .attr("class", "town-borders");
+
+      //temp styling
+      towns.style("fill", "none")
+        .style("stroke", "white");
+
+*/
+
+
 
 
       //event handlers
@@ -364,11 +401,11 @@
         }
 
         var x_scale = d3.scaleLinear()
-          .range([0,width])
+          .range([0, town_width])
           .domain([2013, 2017])
 
         var y_scale = d3.scaleLinear()
-          .range([height, 0])
+          .range([town_height, 0])
           .domain([0,0.005]);
 
         let colorScale= d3.scaleOrdinal()
@@ -381,7 +418,7 @@
           )
           .y(function(d){
 
-            return y_scale(+d["DeathsPC"])}
+            return y_scale(+d["DeathsPerCapita"])}
           )
 
           //current set
@@ -445,17 +482,17 @@
 
            town_plot.append("text")
              .attr("text-anchor", "middle")
-             .attr("transform", `translate(${width/2}, ${height+margins.bottom-10})`)
+             .attr("transform", `translate(${town_width/2}, ${town_height+margins.bottom-10})`)
              .text("Year");
 
            town_plot.append("text")
              .attr("text-anchor", "middle")
-             .attr("transform", `translate(${-(margins.left/1.5)}, ${height/2})rotate(-90)`)
+             .attr("transform", `translate(${-(margins.left/1.5)}, ${town_height/2})rotate(-90)`)
              .text("Deaths per Capita");
 
 
             const x_axis_town = town_plot.append("g")
-                .attr("transform", `translate(0, ${height})`)
+                .attr("transform", `translate(0, ${town_height})`)
                 .call(d3.axisBottom(x_scale).tickFormat(d3.format("d")))
 
             const y_axis_town = town_plot.append("g")
