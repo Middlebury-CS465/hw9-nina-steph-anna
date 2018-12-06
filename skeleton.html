@@ -4,10 +4,75 @@
     <meta charset="UTF-8">
     <title>Opiod Deaths MA</title>
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+    <script src="index.js"></script>
 
 
     <style type="text/css">
 
+    #mapTooltip{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #mapTooltip p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #mapTooltip.hidden{
+    display:none;
+    }
+
+
+    #tooltip{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #tooltip p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #tooltip.hidden{
+    display:none;
+    }
+    #tooltipCityMap{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #tooltipCityMap p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #tooltipCityMap.hidden{
+      display:none;
+    }
 
     </style>
 </head>
@@ -19,6 +84,12 @@
         <p> Text above first vis </p>
     </div>
     <svg id="vis1"></svg>
+    <p id="vis1_caption">
+      Between January and September of 2018, there were <b>1,233</b> opioid-related overdose deaths.
+      ( <span style="background-color: lightgray;">&nbsp; &nbsp;&nbsp;</span> 1 square = 1 death <span style="width:10px;"></span>) <br>
+      Click through to explore the demographic breakdown
+    </p>
+    <button id="vis1_next">Next</button>
     <div>
         <p> Text above second vis </p>
     </div>
@@ -27,26 +98,41 @@
         <p> Text above third vis </p>
     </div>
     <svg id="vis3"></svg>
-    <div id="tooltip" class="hidden">
+    <div>
+      <p> Map shows Massachusetts counties colored by deaths per capita. needs a key, label Boston </p>
+    </div>
+    <svg id="vis4"></svg>
+    <div>
+      <p> Scatterplot shows deaths per capita plotted on year, colored by town name
+        (colors on same scale as map?) (fixed axes?)</p>
+      </div>
+      <svg id ="vis5"></svg>
 
+
+    <div id="mapTooltip" class="hidden">
       <p>
-        Name: <span id="name"></span><br />
-        Gender: <span id="gender"></span><br />
-
+        <span id="countyname"></span> County <br />
+        Total deaths: <span id="deaths"></span><br />
       </p>
     </div>
 
+    <div id="tooltip" class="hidden">
+      <p>
+        <span id="countyname_tooltip"></span> County <br />
+        <span id="prescriptions_tooltip"></span> prescriptions <br />
+        <span id="deaths_tooltip"></span> total deaths <br />
+      </p>
+    </div>
+
+    <div id="tooltipCityMap" class="hidden">
+
+      <p>
+        City: <span id="name"></span><br />
+
+        Population: <span id="pop"></span><br />
+      </p>
+    </div>
     <script>
-    const margins = {top:10, bottom:60, left:60, right:10};
-    const width = 1000;
-    const height = 600;
-    d3.csv("county_deaths.csv").then(function(data)
-    {
-
-
-  });
-
-
 
     </script>
 </body>

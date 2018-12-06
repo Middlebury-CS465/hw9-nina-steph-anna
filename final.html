@@ -8,7 +8,7 @@
 
     <style type="text/css">
 
-    #tooltip{
+    #tooltipSteph{
       position:absolute;
       width:150px;
       height:auto;
@@ -19,13 +19,13 @@
       pointer-events: none;
     }
 
-    #tooltip p{
+    #tooltipSteph p{
       margin:0;
       font-family: sans-serif;
       font-size:12px;
     }
 
-    #tooltip.hidden{
+    #tooltipSteph.hidden{
       display:none;
     }
 
@@ -48,12 +48,12 @@
         <p> Text above third vis </p>
     </div> -->
     <!-- <svg id="vis3"></svg> -->
-    <div id="tooltip" class="hidden">
+    <div id="tooltipSteph" class="hidden">
 
       <p>
-        Name: <span id="name"></span><br />
-        Number of Deaths: <span id="number"></span><br />
-        Population: <span id="pop"></span><br />
+        Name: <span id="nameSteph"></span><br />
+
+        Population: <span id="popSteph"></span><br />
       </p>
     </div>
   <!-- <svg id="key"></svg> -->
@@ -63,7 +63,7 @@
     const height = 400;
     let key_height=450;
     let names=[];
-    d3.csv("https://raw.githubusercontent.com/nsonneborn/ma-opioids-data/master/county_deaths.csv").then(function(dataset)
+    d3.csv("https://raw.githubusercontent.com/nsonneborn/ma-opioids-data/master/county_deaths.csv").then(function(county_data)
     {
       const names=[];
       const county_names=["Barnstable",
@@ -82,7 +82,7 @@
 "Worcester"]
       const data= d3.nest()
         .key(function(d) { return d.County; })
-        .map(dataset);
+        .map(county_data);
       for (i=0; i<county_names.length; i++){
 
         const name=county_names[i];
@@ -110,11 +110,11 @@
       get_average();
       //need to nest data such that we have all years for each county
       console.log(data)
-      const svg = d3.select("#vis2")
+      const svgSteph = d3.select("#vis2")
           .attr("width", width+ margins.right + margins.left)
           .attr("height", height+ margins.top + margins.bottom);
 
-      const chart = svg.append("g")
+      const chartSteph = svgSteph.append("g")
       .attr("transform", `translate(${margins.left}, ${margins.top})`);
 
       const svg2 = d3.select("#key")
@@ -145,26 +145,26 @@
         )
 
         //current set
-        let current=chart.selectAll(".namelines")
+        let current_lines=chartSteph.selectAll(".namelines")
           .data(names, (d)=>d)
 
 
         //exit set
-        current.exit().remove();
+        current_lines.exit().remove();
 
         //enter set
-        let new_lines=current.enter()
+        let new_lines=current_lines.enter()
               .append("path")
               .attr("class", "namelines")
               .on('mouseover', function(d){
 
-                const tooltip=d3.select("#tooltip");
+                const tooltip=d3.select("#tooltipSteph");
 
                 tooltip.classed("hidden", false);
 
-                d3.select("#name").text(d.name);
-                d3.select("#number").text(+d.data[0]["Deaths"]);
-                d3.select("#pop").text(+d.data[0]["Population"]);
+                d3.select("#nameSteph").text(d.name);
+
+                d3.select("#popSteph").text(+d.data[0]["Population"]);
 
 
                 const coordinates = [d3.event.pageX, d3.event.pageY];
@@ -175,15 +175,15 @@
 
               })
               .on('mouseout', function(d){
-                const tooltip=d3.select("#tooltip");
+                const tooltip=d3.select("#tooltipSteph");
                 tooltip.classed("hidden", true);
               })
 
 
 
-        current=current.merge(new_lines);
+        current_lines=current_lines.merge(new_lines);
 
-        current.attr("d", function(d){
+        current_lines.attr("d", function(d){
 
             return line(d.data);
         })
@@ -246,24 +246,24 @@
 
 
       // X axis
-      chart.append("g")
+      chartSteph.append("g")
         .attr("transform", `translate(0, ${height})`)
         .call(d3.axisBottom(x_scale).tickFormat(d3.format("d")))
 
 
 
       // Y axis
-      let yaxis=chart.append("g")
+      let yaxis=chartSteph.append("g")
         .attr("class", "yaxis")
         .call(d3.axisLeft(y_scale))
 
       // Add labels
 
-      chart.append("text")
+      chartSteph.append("text")
         .attr("text-anchor", "middle")
         .attr("transform", `translate(${width/2}, ${height + margins.bottom})`)
         .text("Year");
-      chart.append("text")
+      chartSteph.append("text")
         .attr("text-anchor", "middle")
         .attr("transform", `translate(${-(margins.left)*0.75}, ${height/2})rotate(-90)`)
         .text("Deaths by Overdose per Capita");
