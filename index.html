@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<!-- todo
+steph: create text blurbs on particular times (nina helps)
+nina: cleanup javascript
+anna:map cities, same map but in 2000, 2010, 2017
+
+-->
+
+<head>
+    <meta charset="UTF-8">
+    <title>Opioid Deaths MA</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+      <script src="index.js"></script>
+    <style type="text/css">
+    p, h3, h1, h4{
+      font-family:Helvetica;
+    }
+
+    #mapTooltip{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #mapTooltip p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #mapTooltip.hidden{
+    display:none;
+    }
+
+
+    #tooltip{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #tooltip p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #tooltip.hidden{
+    display:none;
+    }
+    #tooltipCityMap{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #tooltipCityMap p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #tooltipCityMap.hidden{
+      display:none;
+    }
+    #tooltipSteph{
+      position:absolute;
+      width:150px;
+      height:auto;
+      padding:10px;
+      background-color: white;
+      border-radius:10px;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    #tooltipSteph p{
+      margin:0;
+      font-family: sans-serif;
+      font-size:12px;
+    }
+
+    #tooltipSteph.hidden{
+      display:none;
+    }
+
+    </style>
+</head>
+
+<body>
+    <h1 style="text-align: center;">Opioids in Massachusetts</h1>
+    <h4 style="text-align: center;"> Nina Sonneborn, Steph Jordan, and Anna Novak </h4>
+    <div id="intro">
+      <h3>Background</h3>
+      <p style="width:900px;">In the late 1990s, before much research explicated the addictive nature of opiates,
+        physicians began prescribing them for pain relief at increasingly high rates.<br>
+        The dissemination of these drugs into the population on a large scale quickly led to their abuse, and in 2017,
+        the U.S. Department of Health and Human Services declared a public health emergency.
+        Massachusetts has been at the forefront of addressing the crisis, as opioid deaths were four times higher in 2015 than 2000.<br>
+        In May of 2018 Massachusetts Senator Ed Markey introduced bipartisan legislature
+        to measure progress in ending the opiate crisis, marking it as one of the state’s most pressing crises.
+        According to Markey:<br>
+        <p> &nbsp;&nbsp;&nbsp;&nbsp; <i>“The terrorist threat families in America see is not in the streets of Aleppo. It’s fentanyl coming down your street.”</i></p>
+    </div>
+    <hr>
+    <div>
+        <h3>Who is affected?</h3>
+        <p style="width:900px;">According to the American Association of Nurse Anesthetists, as of October 2018, “overdose is the leading cause of death for people under 50.” Click on the buttons below to see how the opioid distribute across demographics…
+    </div>
+    <div style="width:900px;">
+      <svg id="vis1"></svg>
+      <div id="vis1_text" style="width:500px; float:right;">
+        <p id="vis1_caption" >
+          Between January and September of 2018, there were <b>1,233</b> opioid-related overdose deaths.
+          ( <span style="background-color: lightgray;">&nbsp; &nbsp;&nbsp;</span> 1 square = 1 death <span style="width:10px;"></span>) <br>
+          Click through to explore the demographic breakdown
+        </p>
+        <button id="vis1_next">Next</button>
+      </div>
+    </div>
+    <hr>
+    <div>
+        <h3>County by County over time </h3>
+        <p style="width:900px;">Consideration and action have not only taken place at the state level, but also at the individual county level. <br>
+          Namely, Greenfield, a small town in Franklin County in Western MA, was highlighted at the national stage for
+          its innovative rehabilitation practices for recovering opioid addicts.<br>
+          In the Vox article "<a href="https://www.ozy.com/fast-forward/can-this-small-town-lead-america-in-fighting-the-opioid-crisis/85534">Can this small town lead America in fighting the opiate crisis</a>,"
+          Greenfield was hailed for introducing the Franklin County jail’s Farm and Food Systems program,
+          in which inmates have access to organic gardening classes and vocational training that enables them to enter the food industry once they are released.<br>
+          <br>
+          Mouseover the lines in the plot below to see how different counties fare over the years.
+
+    </div>
+      <svg id="vis2"></svg>
+    <div>
+      <p style="width:900px;">
+        The overdose rate seems to be on the verge of a downward trend starting in 2016, but the strength of this trend is difficult to estimate given that we have only one year’s worth of data post 2016. However, given that rates were over 4x higher in 2015 than 2000, Governor Charlie Baker signed Chapter 55 of the Acts of 2015 into law in August of 2015. <a href="https://chapter55.digital.mass.gov/">“This new law permits the analysis of different government datasets to guide policy decisions and to better understand the opioid epidemic.” </a>This could have been one of the driving forces of the progress seen from 2016 to 2017.
+      </p>
+    </div>
+    <div id="tooltipSteph" class="hidden">
+
+      <p>
+        Name: <span id="nameSteph"></span><br />
+
+        Population: <span id="popSteph"></span><br />
+      </p>
+    </div>
+
+    <br><br><br>
+    <hr>
+    <h3>Prescriptions</h3>
+    <div style="width:900px;">
+        <svg id="vis3"></svg>
+        <p style="width:380px; float:right;">
+          We noticed that across all counties, even Franklin County, despite its unprecedented efforts, experience an increase in overdoses per capita from 2000 to 2017.
+          Is this simply due to the inefficacy of treatment programs and policy, or have opioids been increasingly introduced into the system at higher rates?
+        </p>
+    </div>
+    <hr>
+    <div>
+      <h3> Trouble in Eastern Massachusetts </h3>
+      <p style="width:900px;">
+        This map shows Massachusetts counties colored by total deaths per capita between 2013 and 2017. Many of the Eastern counties appear to have higher rates of opioid related deaths.<br>
+        Click on a county to see how deaths per capita has changed over time in that county's cities.
+      </p>
+    </div>
+    <div id="legend" >
+      <p id="title" style="width:20px;">DeathsPerCapita</p>
+      <svg id="gradient_bar" height=20 width=400></svg>
+      <div id="gradient_vals" style="width:400px;">
+        <div id="grad_val1" style="width:33.3%; float:left;"></div>
+        <div id="grad_val2" style="width:33.3%; float:left;"></div>
+        <div id="grad_val3" style="width:33.3%; float:left;"></div>
+      <div>
+    </div>
+    <svg id="vis4"></svg>
+
+    <div id="mapTooltip" class="hidden">
+      <p>
+        <span id="countyname"></span> County <br />
+        Total deaths: <span id="deaths"></span><br />
+      </p>
+    </div>
+
+    <div id="tooltip" class="hidden">
+      <p>
+        <span id="countyname_tooltip"></span> County <br />
+        <span id="prescriptions_tooltip"></span> prescriptions <br />
+        <span id="deaths_tooltip"></span> total deaths <br />
+      </p>
+    </div>
+
+    <div id="tooltipCityMap" class="hidden">
+
+      <p>
+        <span id="name"></span><br />
+
+        Population: <span id="pop"></span><br />
+      </p>
+    </div>
+
+    <script>
+
+
+
+
+    </script>
+</body>
+</html>
