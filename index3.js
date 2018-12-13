@@ -264,7 +264,7 @@ town_plot.append("g")
    .attr("transform", `translate(0, ${town_height})`)
    .call(d3.axisBottom(x_scale_town).tickFormat(d3.format("d")))
 
-town_plot.append("g")
+let ybar=town_plot.append("g")
    .call(d3.axisLeft(y_scale_town));
 
 let town_plot_title = town_plot.append("text")
@@ -296,13 +296,13 @@ const update_town_vis = function() {
     const name_obj = {name:name, data:selected, color: null};
     names2.push(name_obj)
   }
-
-
+  console.log(names2);
+  // y_scale_town.domain(d3.extent(names2, (d)=>d.data[0]["DeathsPerCapita"]))
+  // ybar.call(d3.axisLeft(y_scale_town));
   let colorScale= d3.scaleQuantize()
-    .domain(names, (d)=>(d.name))
+    .domain(d3.extent(names2, (d, i)=>(i)))
     .range(colorbrewer.YlGnBu[8]);
-    // d3.scaleOrdinal()
-    // .range(["red", "green", "blue", "orange", "yellow", "purple", "pink", "indigo","#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
 
   const line = d3.line()
     .x((d) => x_scale_town(+d["Year"]))
@@ -344,11 +344,12 @@ const update_town_vis = function() {
 
   current=current.merge(new_lines);
 
-  current.attr("d", function(d){
+  current.attr("d", function(d,i){
+      console.log(i)
       return line(d.data);
   })
   .style("stroke", function(d,i){
-    return colorScale(d.name)})
+    return colorScale(i)})
   .style("fill", "none")
   .attr('stroke-width', function(d) {
       if (d.name==="Average"){
@@ -412,7 +413,7 @@ const gridColors = {
   "Black": "#404040",
   "Asian": "#f4a582",
   "Hispanic": "#ca0020",
-  "Other": "lightpurple",
+  "Other": "pink",
   "15-24": "#fef0d9",
   "25-34": "#fdd49e",
   "35-44": "#fdbb84",
@@ -446,18 +447,18 @@ const gridCaptions = [
   "Looking at the breakdown by race, we can see that this is affecting white males the most. "+
   "While 72.1% of Massachusetts residents are White (Non-Hispanic), "+
   "<span style='color:" + gridColors["White"] + "'> <b>81% of opioid overdose victims</b></span> are white. <br>" +
-  "Compare this to Hispanics, which make up 7% of the MA population but less than 1% of opioid deaths. <br><br>" +
+  "Compare this to <span style='color:" + gridColors["Hispanic"] + "'><b>Hispanics</b></span>, who make up 7% of the MA population but less than 1% of opioid deaths. <br><br>" +
   " <span style='background-color:" + gridColors["White"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " White &nbsp;&nbsp;" +
   " <span style='background-color:" + gridColors["Black"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Black &nbsp;&nbsp;" +
   " <span style='background-color:" + gridColors["Asian"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Asian &nbsp;&nbsp;" +
   " <span style='background-color:" + gridColors["Hispanic"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Hispanic &nbsp;&nbsp;" +
   " <span style='background-color:" + gridColors["Other"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Other/Unknown &nbsp;&nbsp;",
   // Age
-  "We can also see the age of these victims is relatively spread, though affecting those under 24 and over 55 less often. " +
-  "However, it's important to note the implications of these numbers. <br><br>"+
+  "We can also see the age of these victims is relatively spread, although those under 24 and over 55 are affected less often. " +
+  "However, it is important to note the implications of these numbers. <br><br>"+
   "<b>58%</b> of all deaths of Massachusetts residents between the ages of"+"<span style='color:" + gridColors["25-34"] + "'>  <b>25</b></span>" +
   " and <span style='color:" + gridColors["35-44"] + "'><b>44</b></span> were caused by opioids, " +
-  "compared to <b>34%</b> for those aged 45 through 64 <br><br>" +
+  "compared to <b>34%</b> for those aged"+"<span style='color:" + gridColors["45-54"] + "'>  <b>45</b></span>" + " through" +"<span style='color:" + gridColors["55-64"] + "'>  <b>64</b></span>" + "<br><br>" +
   " <span style='background-color:" + gridColors["15-24"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 15-24 &nbsp;&nbsp;" +
   " <span style='background-color:" + gridColors["25-34"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 25-34 &nbsp;&nbsp;" +
   " <span style='background-color:" + gridColors["35-44"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 35-44 &nbsp;&nbsp;" +
@@ -562,8 +563,10 @@ var y_scale1 = d3.scaleLinear()
   .range([height, 0])
   .domain([0,0.0005]);
 
-let colorScale= d3.scaleOrdinal()
-.range(["red", "green", "blue", "orange", "yellow", "purple", "pink", "indigo","#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+let colorScale= d3.scaleQuantize()
+  .domain(d3.extent(names, (d,i) => i))
+  .range(colorbrewer.YlGnBu[8]);
+
 
 const line = d3.line()
   .x(function(d){
@@ -592,7 +595,7 @@ const line = d3.line()
           const tooltip=d3.select("#tooltipSteph");
 
           tooltip.classed("hidden", false);
-
+          const name=d.name;
           d3.select("#nameSteph").text(d.name);
 
           d3.select("#popSteph").text(+d.data[0]["Population"]);
@@ -603,11 +606,31 @@ const line = d3.line()
           tooltip.style("left", (coordinates[0]+25) + "px");
           tooltip.style("top", (coordinates[1]+25) + "px");
 
+          //new color stuff
+          const curr = d3.select(this);
+          let lines=chartSteph.selectAll(".namelines");
+
+          lines.style('stroke', function(d) {
+              if (d.name!=name){
+                console.log("here")
+                return "lightgray";
+              }
+
+           });
 
         })
         .on('mouseout', function(d){
           const tooltip=d3.select("#tooltipSteph");
           tooltip.classed("hidden", true);
+          let lines=chartSteph.selectAll(".namelines");
+
+          lines.style('stroke', function(d, i) {
+
+
+                return colorScale(i);
+
+
+           });
         })
 
 
@@ -625,11 +648,11 @@ const line = d3.line()
   .attr('stroke-width', function(d) {
       if (d.name==="Average"){
 
-        return 3;
+        return 5;
       }
       else{
 
-        return 1;
+        return 3;
       }
 
    });
@@ -647,7 +670,7 @@ const line = d3.line()
          lines.attr('stroke-width', function(d) {
              if (d.name==="Average"){
 
-               return 3;
+               return 5;
              }
              else{
 
@@ -661,11 +684,11 @@ const line = d3.line()
          lines.attr('stroke-width', function(d) {
              if (d.name==="Average"){
 
-               return 3;
+               return 5;
              }
              else{
 
-               return 1;
+               return 3;
              }
 
           });
