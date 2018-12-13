@@ -1,6 +1,7 @@
 const margins = {top:10, bottom:60, left:90, right:20};
 const width = 800;
 const height = 600;
+let centered;
 
 // Data shaping for vis1 (squares)
 const deathsbygender = {Total:1233,Male:905,Female:328}
@@ -107,6 +108,7 @@ const town_map_data = data[3];
 const ma_counties = topojson.feature(county_map_data, county_map_data.objects.mass_counties);
 const ma_towns = topojson.feature(town_map_data, town_map_data.objects.ma_towns);
 
+console.log("ma towns first loaded", ma_towns)
 
 
 // set domain of map color scale
@@ -122,6 +124,12 @@ let townData = d3.nest()
   .key((d) => d.County)
   .entries(town_data);
 
+// double nest the town level data
+let townData2 = d3.nest()
+  .key((d) => d.City)
+  .entries(town_data)
+
+console.log("townData2", townData2)
 
 
 // x and y scales for chart3 (county scatterplot)
@@ -179,7 +187,7 @@ scatterplot.append("line")
   .style("stroke", "lightgray")
 
 
-
+console.log("counties before map", ma_counties)
 
 // map countyData, so we can easily find records for a given county
 const county_map = d3.map();
@@ -191,8 +199,12 @@ for (let i = 0; i < ma_counties.features.length; i++) {
   ma_counties.features[i].properties.value = county_map.get(name);
 }
 
+console.log("counties after map",  ma_counties)
+
 //create counties in the map g
-const counties = map.selectAll(".county-borders")
+const counties = map.append("g")
+  .attr("id", "county-layer")
+  .selectAll(".county-borders")
   .data(ma_counties.features, (d) => d)
   .enter()
   .append("path")
@@ -211,7 +223,57 @@ counties.style("stroke", "lightgray")
   });
 
 
-//event handlers
+
+  // map townData, so we can easily find records for a given town
+  const town_map = d3.map();
+  townData2.forEach((d) => {town_map.set(d.values[0].City, d.values[0])});
+
+  console.log("town map", town_map);
+
+  //Loop through the path data, attach appropriate record to each one
+  for (let i = 0; i < ma_towns.features.length; i++) {
+    let town_name = ma_towns.features[i].properties.TOWN;
+    if(town_name.includes(" ")){
+      town_name = town_name.slice(0,1) +
+          town_name.slice(1, town_name.indexOf(" ")).toLowerCase() + " " +
+           town_name.slice(town_name.indexOf(" ") +1,town_name.indexOf(" ") +2) +
+           town_name.slice( town_name.indexOf(" ") +2, town_name.length).toLowerCase();
+    } else {
+    town_name = town_name.slice(0,1) + town_name.slice(1, town_name.length).toLowerCase();
+
+  }
+  console.log(town_name)
+    // console.log(town_map.get(town_name))
+    ma_towns.features[i].properties.value = town_map.get(town_name);
+  }
+
+
+console.log("towns after map", town_map);
+// Add towns layer to map
+  map.append("g")
+    .attr("id", "town-layer")
+    .selectAll(".town-borders")
+    .data(ma_towns.features, (d) => d)
+    .enter()
+    .append("path")
+    .attr("d", mapPath)
+    .attr("class", "town-borders")
+    .style("stroke", "lightgray")
+    .style("stroke-width", 0)
+    .style("fill", function(d) {
+      if (d.properties.value && d.properties.value["TotalDeathsPerCapita"] !== "NA") {
+        return color_scale(+d.properties.value["TotalDeathsPerCapita"]);
+      } else{
+        return "lightgray";
+      }
+    });
+
+
+
+
+
+
+//event handlers for map
 counties.on("mouseover", function(d){
   const coordinates = [d3.event.pageX, d3.event.pageY];
 
@@ -235,6 +297,19 @@ counties.on("mouseout", function(d) {
 counties.on("click", function(item_data) {
   selectedCounty = item_data.properties.NAME;
   update_town_vis();
+
+  console.log(item_data);
+
+  if (item_data && centered !== item_data) {
+    centered = item_data;
+  } else {
+    centered = null;
+  }
+
+  map.selectAll("path")
+    .classed("active", centered && function(item_data) { return item_data === centered; } )
+    .style("stroke-width", 2);
+
 });
 
 
