@@ -112,7 +112,9 @@ console.log("ma towns first loaded", ma_towns)
 
 
 // set domain of map color scale
-color_scale.domain(d3.extent(county_data, (d) => +d["TotalDeathsPerCapita"]));
+// This needs some attention. Currently set based on min/max of county data,
+// but towns have a different scale (lower min and higher max) Something looks gross either way.
+color_scale.domain([.0009, d3.max(county_data, (d) => +d["TotalDeathsPerCapita"])]);
 
 // nest the county level data
 let countyData = d3.nest()
@@ -199,18 +201,23 @@ for (let i = 0; i < ma_counties.features.length; i++) {
   ma_counties.features[i].properties.value = county_map.get(name);
 }
 
-console.log("counties after map",  ma_counties)
 
-//create counties in the map g
-const counties = map.append("g")
-  .attr("id", "county-layer")
+//Add county-layer to map
+map.append("g")
+  .attr("id", "county-layer");
+
+map.append("g")
+    .attr("id", "town-layer")
+
+
+// Add county borders to county-layer g
+const counties = d3.select("#county-layer")
   .selectAll(".county-borders")
   .data(ma_counties.features, (d) => d)
   .enter()
   .append("path")
   .attr("d", mapPath)
   .attr("class", "county-borders");
-
 
 //style each county to set fill color based on deaths per capita
 counties.style("stroke", "lightgray")
@@ -228,11 +235,12 @@ counties.style("stroke", "lightgray")
   const town_map = d3.map();
   townData2.forEach((d) => {town_map.set(d.values[0].City, d.values[0])});
 
-  console.log("town map", town_map);
+  console.log("towns after data map", town_map);
 
   //Loop through the path data, attach appropriate record to each one
   for (let i = 0; i < ma_towns.features.length; i++) {
     let town_name = ma_towns.features[i].properties.TOWN;
+
     if(town_name.includes(" ")){
       town_name = town_name.slice(0,1) +
           town_name.slice(1, town_name.indexOf(" ")).toLowerCase() + " " +
@@ -240,33 +248,14 @@ counties.style("stroke", "lightgray")
            town_name.slice( town_name.indexOf(" ") +2, town_name.length).toLowerCase();
     } else {
     town_name = town_name.slice(0,1) + town_name.slice(1, town_name.length).toLowerCase();
-
-  }
-  console.log(town_name)
-    // console.log(town_map.get(town_name))
+    }
     ma_towns.features[i].properties.value = town_map.get(town_name);
-  }
+  };
+
+console.log("ma towns" , ma_towns);
 
 
-console.log("towns after map", town_map);
-// Add towns layer to map
-  map.append("g")
-    .attr("id", "town-layer")
-    .selectAll(".town-borders")
-    .data(ma_towns.features, (d) => d)
-    .enter()
-    .append("path")
-    .attr("d", mapPath)
-    .attr("class", "town-borders")
-    .style("stroke", "lightgray")
-    .style("stroke-width", 0)
-    .style("fill", function(d) {
-      if (d.properties.value && d.properties.value["TotalDeathsPerCapita"] !== "NA") {
-        return color_scale(+d.properties.value["TotalDeathsPerCapita"]);
-      } else{
-        return "lightgray";
-      }
-    });
+
 
 
 
@@ -298,17 +287,15 @@ counties.on("click", function(item_data) {
   selectedCounty = item_data.properties.NAME;
   update_town_vis();
 
-  console.log(item_data);
 
-  if (item_data && centered !== item_data) {
-    centered = item_data;
-  } else {
-    centered = null;
-  }
+  // get county out of item data
+  let selected_county = item_data.properties.NAME
+  update_town_map(selected_county);
 
-  map.selectAll("path")
-    .classed("active", centered && function(item_data) { return item_data === centered; } )
-    .style("stroke-width", 2);
+  //make selected county grey
+  // this.attr("fill", "lightgray")
+
+
 
 });
 
@@ -371,7 +358,6 @@ const update_town_vis = function() {
     const name_obj = {name:name, data:selected, color: null};
     names2.push(name_obj)
   }
-  console.log(names2);
   // y_scale_town.domain(d3.extent(names2, (d)=>d.data[0]["DeathsPerCapita"]))
   // ybar.call(d3.axisLeft(y_scale_town));
   let colorScale= d3.scaleQuantize()
@@ -420,7 +406,6 @@ const update_town_vis = function() {
   current=current.merge(new_lines);
 
   current.attr("d", function(d,i){
-      console.log(i)
       return line(d.data);
   })
   .style("stroke", function(d,i){
@@ -441,6 +426,57 @@ const update_town_vis = function() {
 };
 
 
+
+    /* Update Town Map based on selected county
+    */
+    const update_town_map = function(selected_county) {
+
+      let selected_towns_data = ma_towns.features.filter( function(d) {
+
+        // console.log("selected county", selected_county )
+
+        //console.log(d.properties.value.County);
+
+        if (d.properties.value) {
+        return d.properties.value.County == selected_county;
+        } else {
+        return false
+        console.log("funky", d.properties.value)
+      }
+
+      })
+
+      console.log(selected_towns_data);
+
+
+      // Enter/exit/update for Towns
+      let towns = d3.select("#town-layer").selectAll(".town-borders")
+          .data(selected_towns_data, (d) => d)
+
+
+        console.log("exit", towns.exit());
+       towns.exit().remove();
+
+       console.log("enter", towns.enter())
+      let new_towns = towns.enter()
+                 .append("path")
+                 .attr("d", mapPath)
+                 .attr("class", "town-borders")
+
+        towns = towns.merge(new_towns);
+
+        towns.style("stroke", "lightgray")
+          .style("stroke-width", 0)
+          .style("fill", function(d) {
+            if (d.properties.value && d.properties.value["TotalDeathsPerCapita"] !== "NA") {
+              return color_scale(+d.properties.value["TotalDeathsPerCapita"]);
+            } else{
+              return "lightgray";
+            }
+          });
+
+
+    };
 
 
 
@@ -864,12 +900,13 @@ const gradient_bar = d3.select('#gradient_bar')
               .attr("height", 20)
               .style("fill", "url(#linear-gradient)");
 
-      const deaths_pc_min = d3.min(county_data, (d) => +d["TotalDeathsPerCapita"]);
-      const deaths_pc_max =d3.max(county_data, (d) => +d["TotalDeathsPerCapita"])
+      const deaths_pc_min = color_scale.domain()[0];
+      const deaths_pc_max =color_scale.domain()[1];
       d3.select('#grad_val1').html(deaths_pc_min.toPrecision(3))//min of deaths per Capita
       d3.select('#grad_val2').html("&nbsp; &nbsp; &nbsp; &nbsp;" + ((deaths_pc_max + deaths_pc_min)/2).toPrecision(3))
       d3.select('#grad_val3').html("&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;" +deaths_pc_max.toPrecision(3))//20th percentile of deaths per Capita....
 
+      console.log("color scale range", color_scale.domain())
 
 
 }); //d3.csv().then()
