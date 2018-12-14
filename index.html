@@ -8,11 +8,8 @@ nina: cleanup javascript
 anna:map cities, same map but in 2000, 2010, 2017
 doc explaining visual choices
 fix colors on steph Scatterplot to map to indiviidual counties
-analysis of regression stats
 
 dynamic axes anna town plot
-
-reposition steph scale and check box
 
 Fairhaven 2015 missing DeathsPerCapita
 
@@ -138,9 +135,12 @@ rogue town
           <br>
             <br>
         <img
-        src ="https://scd.france24.com/en/files/imagecache/home_1024/article/image/27082017_opioid_crisis.jpg" height="551" width="980">
+        src ="https://scd.france24.com/en/files/imagecache/home_1024/article/image/27082017_opioid_crisis.jpg" height="360" width="640"
+        style='display: block; margin-left: auto;margin-right: auto;width: 50%;'>
       </img>
-      <p>"Sarah Wilson joins other recovering drug users, activists and social service providers at a rally calling for "bolder political action" in combating the overdose epidemic on August 17, 2017 in New York City." Source: www.france24.com</p>
+      <p style='display: block; margin-left: auto;margin-right: auto;width: 50%; font-size:80%;'>
+        "Sarah Wilson joins other recovering drug users, activists and social service providers at a rally calling for "bolder political action" in combating the overdose epidemic on August 17, 2017 in New York City." Source: www.france24.com
+      </p>
 
       <h3>Massachusetts</h3>
       <p>
@@ -181,18 +181,18 @@ rogue town
           Mouseover the lines in the plot below to see how different counties are affected by opiod overdoses over the years.
 
     </div>
-<div>
-      <svg id="vis2"></svg>
-      <svg id="key"style="width:100px;height:310px;" ></svg>
+    <div style="width:1100px;">
       <div style="float:right;">
-
-              <input id="controls" type="checkbox" name="layer" value="point-layer" > Size lines by Population</li>
-
-
+          <input id="controls" type="checkbox" name="layer" value="point-layer" > Size lines by Population</li>
       </div>
-</div>
+      <svg id="vis2" style="float:left;"></svg>
+      <svg id="key"style="width:100px;height:310px;" ></svg>
+
+    </div>
     <div>
+      <br>
       <p style="width:900px;">
+        <br><br>
         The overdose rate seems to be on the verge of a downward trend starting in 2016, but the strength of this trend is difficult to estimate given that we have only one year’s worth of data post 2016.
         However, after the rapid overdose increase from 2000 to 2015,
         Governor Charlie Baker signed Chapter 55 of the Acts of 2015 into law in August of 2015. Chapter 55 <a href="https://chapter55.digital.mass.gov/"> "permits the analysis of different government datasets to guide policy decisions and to better understand the opioid epidemic.” </a>
@@ -228,7 +228,7 @@ rogue town
           p-value: 0.001
           <br>
           <br>
-          insert analysis here
+          Based on these results, there is a strong positive correlation between prescriptions and overdoses.
         </p>
     </div>
     <hr>
@@ -251,7 +251,7 @@ rogue town
         <div id="grad_val3" style="width:33.3%; float:left;"></div>
       </div>
     </div>
-    <svg id="vis4"></svg>
+    <svg id="vis4" width="1200"></svg>
 
     <div id="mapTooltip" class="hidden">
       <p>

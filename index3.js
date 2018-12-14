@@ -1,7 +1,6 @@
 const margins = {top:10, bottom:60, left:90, right:20};
 const width = 800;
 const height = 600;
-let centered;
 
 // Data shaping for vis1 (squares)
 const deathsbygender = {Total:1233,Male:905,Female:328}
@@ -49,60 +48,56 @@ d3.csv("city_deaths.csv"),
 d3.json("mass_counties.json"),
 d3.json("mass_towns.json")
 ]).then(function(data){
-  const chart3 = d3.select("#vis3")
-      .attr("width", scatter_width + margins.right + margins.left)
-      .attr("height", scatter_height + margins.top + margins.bottom);
+    const chart3 = d3.select("#vis3")
+        .attr("width", scatter_width + margins.right + margins.left)
+        .attr("height", scatter_height + margins.top + margins.bottom);
 
-  const scatterplot = chart3.append("g")
-      .attr("transform", `translate(${margins.left}, ${margins.top})`);
+    const scatterplot = chart3.append("g")
+        .attr("transform", `translate(${margins.left}, ${margins.top})`);
 
-      scatterplot.append("text")
-        .attr("text-anchor", "middle")
-        .attr("transform", `translate(${scatter_width/2}, ${scatter_height+margins.bottom-10})`)
-        .text("Schedule II Opioid Prescriptions (Total, 2013 - 2017)");
+        scatterplot.append("text")
+          .attr("text-anchor", "middle")
+          .attr("transform", `translate(${scatter_width/2}, ${scatter_height+margins.bottom-10})`)
+          .text("Schedule II Opioid Prescriptions (Total, 2013 - 2017)");
 
-      scatterplot.append("text")
-        .attr("text-anchor", "middle")
-        .attr("transform", `translate(${-(margins.left/1.5)}, ${scatter_height/2})rotate(-90)`)
-        .text("Opioid Related Deaths (total 2013-2017)");
+        scatterplot.append("text")
+          .attr("text-anchor", "middle")
+          .attr("transform", `translate(${-(margins.left/1.5)}, ${scatter_height/2})rotate(-90)`)
+          .text("Opioid Related Deaths (total 2013-2017)");
 
 
-      // Set up map
-      const chart4 = d3.select("#vis4")
-          .attr("width", width + margins.right + margins.left)
-          .attr("height", height + margins.top + margins.bottom);
+    // Set up map
+    const chart4 = d3.select("#vis4")
+        // .attr("width", width + margins.right + margins.left + 600)
+        .attr("width", 1200)
+        .attr("height", height + margins.top + margins.bottom);
 
-      const map = chart4.append("g")
-          .attr("transform", `translate(${margins.left}, ${margins.top})`);
+    const map = chart4.append("g")
+        .attr("transform", `translate(${margins.left}, ${margins.top})`);
 
-      // create projection to map from lat,lon data to x,y, coordinates
-      // Center on Massachusetts
-      const projection = d3.geoAlbers()
+    // create projection to map from lat,lon data to x,y, coordinates
+    // Center on Massachusetts
+    const projection = d3.geoAlbers()
         .scale( 19000 )
         .rotate( [71.057,0] )
         .center( [-0.5, 41.95] )
         .translate( [width/2,height/2] );
 
-      //create path tool to translate GeoJSON into SVG path data
-      const mapPath = d3.geoPath().projection(projection);
+    //create path tool to translate GeoJSON into SVG path data
+    const mapPath = d3.geoPath().projection(projection);
 
-      //create coloring tool
-      const color_scale = d3.scaleQuantize()
+    //create coloring tool
+    const color_scale_map = d3.scaleQuantize()
         .range(colorbrewer.YlGnBu[8]); //YlOrBr
 
-      // Set up DeathsPerCapita per year by Town Scatterplot
+    // Data assignments
+    const county_data = data[0];
+    const town_data = data[1];
+    const county_map_data = data[2];
+    const town_map_data = data[3];
 
-
-
-      //Steph constants
-      let key_height=450;
-      //let names=[];
-
-const county_data = data[0];
-const town_data = data[1];
-const county_map_data = data[2];
-const town_map_data = data[3];
-
+    //Steph constants
+    let key_height=450;
 
 //convert map data from TopoJSON to GeoJSON
 const ma_counties = topojson.feature(county_map_data, county_map_data.objects.mass_counties);
@@ -114,22 +109,22 @@ console.log("ma towns first loaded", ma_towns)
 // set domain of map color scale
 // This needs some attention. Currently set based on min/max of county data,
 // but towns have a different scale (lower min and higher max) Something looks gross either way.
-color_scale.domain([.0009, d3.max(county_data, (d) => +d["TotalDeathsPerCapita"])]);
+color_scale_map.domain([.0009, d3.max(county_data, (d) => +d["TotalDeathsPerCapita"])]);
 
 // nest the county level data
 let countyData = d3.nest()
-  .key((d) => d.County)
-  .entries(county_data);
+    .key((d) => d.County)
+    .entries(county_data);
 
 //nest the town level data
 let townData = d3.nest()
-  .key((d) => d.County)
-  .entries(town_data);
+    .key((d) => d.County)
+    .entries(town_data);
 
 // double nest the town level data
 let townData2 = d3.nest()
-  .key((d) => d.City)
-  .entries(town_data)
+    .key((d) => d.City)
+    .entries(town_data)
 
 console.log("townData2", townData2)
 
@@ -152,22 +147,22 @@ const y_axis = scatterplot.append("g")
 
 //Create scatterplot points, bind nested countyData
 let points = scatterplot.selectAll(".newPoints")
-.data(countyData, (d) => d)
-.enter()
-.append("circle")
-.attr("class", "newPoints")
-.attr("cx", (d) => x_scale(+d.values[0].TotalPrescriptions))
-.attr("cy", (d) => y_scale(+d.values[0].TotalDeathsAllYears))
-.attr("r", 4) // (d) => (+d.values[0].Population) * .000001
-.style("fill", color_scale(.0025));
+    .data(countyData, (d) => d)
+    .enter()
+    .append("circle")
+    .attr("class", "newPoints")
+    .attr("cx", (d) => x_scale(+d.values[0].TotalPrescriptions))
+    .attr("cy", (d) => y_scale(+d.values[0].TotalDeathsAllYears))
+    .attr("r", 4) // (d) => (+d.values[0].Population) * .000001
+    .style("fill", color_scale_map(.0025));
 
 points.on("mouseover", function(d){
   const coordinates = [d3.event.pageX, d3.event.pageY];
 
 d3.select("#tooltip")
-  .style("left", (coordinates[0]+25) + "px")
-  .style("top", (coordinates[1]+10) + "px")
-  .classed("hidden", false);
+    .style("left", (coordinates[0]+25) + "px")
+    .style("top", (coordinates[1]+10) + "px")
+    .classed("hidden", false);
 
 d3.select("#countyname_tooltip").text(d.key);
 d3.select("#prescriptions_tooltip").text(d.values[0].TotalPrescriptions);
@@ -182,11 +177,11 @@ points.on("mouseout", function(d) {
  // Add regression line to scatterplot
  // y = (.03156)x - 100.1
 scatterplot.append("line")
-  .attr("x1", x_scale(0))
-  .attr("x2", x_scale(91295))
-  .attr("y1", y_scale(-100.1))
-  .attr("y2", y_scale(.03156 * 91295 - 100.1))
-  .style("stroke", "lightgray")
+    .attr("x1", x_scale(0))
+    .attr("x2", x_scale(91295))
+    .attr("y1", y_scale(-100.1))
+    .attr("y2", y_scale(.03156 * 91295 - 100.1))
+    .style("stroke", "lightgray")
 
 
 console.log("counties before map", ma_counties)
@@ -204,7 +199,7 @@ for (let i = 0; i < ma_counties.features.length; i++) {
 
 //Add county-layer to map
 map.append("g")
-  .attr("id", "county-layer");
+    .attr("id", "county-layer");
 
 map.append("g")
     .attr("id", "town-layer")
@@ -212,22 +207,22 @@ map.append("g")
 
 // Add county borders to county-layer g
 const counties = d3.select("#county-layer")
-  .selectAll(".county-borders")
-  .data(ma_counties.features, (d) => d)
-  .enter()
-  .append("path")
-  .attr("d", mapPath)
-  .attr("class", "county-borders");
+    .selectAll(".county-borders")
+    .data(ma_counties.features, (d) => d)
+    .enter()
+    .append("path")
+    .attr("d", mapPath)
+    .attr("class", "county-borders");
 
 //style each county to set fill color based on deaths per capita
 counties.style("stroke", "lightgray")
-  .style("fill", function(d) {
-    if (d.properties.value) {
-      return color_scale(+d.properties.value["TotalDeathsPerCapita"]);
-    } else{
-      return "red";
-    }
-  });
+    .style("fill", function(d) {
+      if (d.properties.value) {
+        return color_scale_map(+d.properties.value["TotalDeathsPerCapita"]);
+      } else{
+        return "red";
+      }
+    });
 
 
 
@@ -242,10 +237,11 @@ counties.style("stroke", "lightgray")
     let town_name = ma_towns.features[i].properties.TOWN;
 
     if(town_name.includes(" ")){
+      let space_index = town_name.indexOf(" ");
       town_name = town_name.slice(0,1) +
-          town_name.slice(1, town_name.indexOf(" ")).toLowerCase() + " " +
-           town_name.slice(town_name.indexOf(" ") +1,town_name.indexOf(" ") +2) +
-           town_name.slice( town_name.indexOf(" ") +2, town_name.length).toLowerCase();
+          town_name.slice(1, space_index).toLowerCase() + " " +
+           town_name.slice(space_index + 1, space_index + 2) +
+           town_name.slice(space_index +2, town_name.length).toLowerCase();
     } else {
     town_name = town_name.slice(0,1) + town_name.slice(1, town_name.length).toLowerCase();
     }
@@ -360,7 +356,7 @@ const update_town_vis = function() {
   }
   // y_scale_town.domain(d3.extent(names2, (d)=>d.data[0]["DeathsPerCapita"]))
   // ybar.call(d3.axisLeft(y_scale_town));
-  let colorScale= d3.scaleQuantize()
+  let color_scale_townlines= d3.scaleQuantize()
     .domain(d3.extent(names2, (d, i)=>(i)))
     .range(colorbrewer.YlGnBu[8]);
 
@@ -409,7 +405,7 @@ const update_town_vis = function() {
       return line(d.data);
   })
   .style("stroke", function(d,i){
-    return colorScale(i)})
+    return color_scale_townlines(i)})
   .style("fill", "none")
   .attr('stroke-width', function(d) {
       if (d.name==="Average"){
@@ -469,7 +465,7 @@ const update_town_vis = function() {
           .style("stroke-width", 0)
           .style("fill", function(d) {
             if (d.properties.value && d.properties.value["TotalDeathsPerCapita"] !== "NA") {
-              return color_scale(+d.properties.value["TotalDeathsPerCapita"]);
+              return color_scale_map(+d.properties.value["TotalDeathsPerCapita"]);
             } else{
               return "lightgray";
             }
@@ -674,7 +670,7 @@ var y_scale1 = d3.scaleLinear()
   .range([height, 0])
   .domain([0,0.0005]);
 
-let colorScale= d3.scaleQuantize()
+let color_scale_townlines= d3.scaleQuantize()
   .domain(d3.extent(names, (d,i) => i))
   .range(colorbrewer.YlGnBu[8]);
 
@@ -738,7 +734,7 @@ const line = d3.line()
           lines.style('stroke', function(d, i) {
 
 
-                return colorScale(i);
+                return color_scale_townlines(i);
 
 
            });
@@ -754,7 +750,7 @@ const line = d3.line()
   })
   .style("stroke", function(d,i){
 
-    return colorScale(i)})
+    return color_scale_townlines(i)})
   .style("fill", "none")
   .attr('stroke-width', function(d) {
       if (d.name==="Average"){
@@ -824,7 +820,7 @@ const line = d3.line()
   .attr('y',(d,i)=>i*20)
   .attr('width', 60)
   .attr('height', 20)
-  .style("fill", (d, i)=>colorScale(i)/*d3.schemeCategory20[i]*/);
+  .style("fill", (d, i)=>color_scale_townlines(i)/*d3.schemeCategory20[i]*/);
 
   //current set for text
   let currentText=key.selectAll(".keytext")
@@ -889,9 +885,9 @@ const gradient_bar = d3.select('#gradient_bar')
               
 
       linearGradient.selectAll("stop")
-          .data( color_scale.range() )
+          .data( color_scale_map.range() )
           .enter().append("stop")
-          .attr("offset", function(d,i) { return i/(color_scale.range().length-1); })
+          .attr("offset", function(d,i) { return i/(color_scale_map.range().length-1); })
           .attr("stop-color", function(d) { return d; });
 
       //Draw the rectangle and fill with gradient
@@ -900,13 +896,13 @@ const gradient_bar = d3.select('#gradient_bar')
               .attr("height", 20)
               .style("fill", "url(#linear-gradient)");
 
-      const deaths_pc_min = color_scale.domain()[0];
-      const deaths_pc_max =color_scale.domain()[1];
+      const deaths_pc_min = color_scale_map.domain()[0];
+      const deaths_pc_max =color_scale_map.domain()[1];
       d3.select('#grad_val1').html(deaths_pc_min.toPrecision(3))//min of deaths per Capita
       d3.select('#grad_val2').html("&nbsp; &nbsp; &nbsp; &nbsp;" + ((deaths_pc_max + deaths_pc_min)/2).toPrecision(3))
       d3.select('#grad_val3').html("&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;" +deaths_pc_max.toPrecision(3))//20th percentile of deaths per Capita....
 
-      console.log("color scale range", color_scale.domain())
+      console.log("color scale range", color_scale_map.domain())
 
 
 }); //d3.csv().then()
