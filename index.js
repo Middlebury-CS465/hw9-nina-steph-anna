@@ -268,7 +268,7 @@ d3.json("mass_towns.json")
     scatterplot.append("text")
       .attr("text-anchor", "middle")
       .attr("transform", `translate(${-(margins.left/1.5)}, ${scatter_height/2})rotate(-90)`)
-      .text("Opioid Related Deaths (total 2013-2017)");
+      .text("Opioid Related Deaths (Total, 2013-2017)");
 
     // x and y scales for chart3 (prescription scatterplot)
     const x_scale = d3.scaleLinear()
@@ -557,7 +557,7 @@ d3.json("mass_towns.json")
       "Looking at the breakdown by race, we can see that this is affecting white males the most. "+
       "While 72.1% of Massachusetts residents are White (Non-Hispanic), "+
       "<span style='color:" + gridColors["White"] + "'> <b>81% of opioid overdose victims</b></span> are white. <br>" +
-      "Compare this to <span style='color:" + gridColors["Hispanic"] + "'><b>Hispanics</b></span>, who make up 7% of the MA population but less than 1% of opioid deaths. <br><br>" +
+      "Compare this to <span style='color:" + gridColors["Asian"] + "'><b>Asian</b></span>, who make up 7% of the MA population but less than 1% of opioid deaths. <br><br>" +
       " <span style='background-color:" + gridColors["White"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " White &nbsp;&nbsp;" +
       " <span style='background-color:" + gridColors["Black"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Black &nbsp;&nbsp;" +
       " <span style='background-color:" + gridColors["Asian"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " Asian &nbsp;&nbsp;" +
@@ -568,7 +568,7 @@ d3.json("mass_towns.json")
       "However, it is important to note the implications of these numbers. <br><br>"+
       "<b>58%</b> of all deaths of Massachusetts residents between the ages of"+"<span style='color:" + gridColors["25-34"] + "'>  <b>25</b></span>" +
       " and <span style='color:" + gridColors["35-44"] + "'><b>44</b></span> were caused by opioids, " +
-      "compared to <b>34%</b> for those aged"+"<span style='color:" + gridColors["45-54"] + "'>  <b>45</b></span>" + " through" +"<span style='color:" + gridColors["55-64"] + "'>  <b>64</b></span>" + "<br><br>" +
+      "compared to <b>34%</b> for those aged"+"<span style='color:" + gridColors["45-54"] + "'>  <b>45</b></span>" + " through" +"<span style='color:" + gridColors["55-64"] + "'>  <b>64</b></span>." + "<br><br>" +
       " <span style='background-color:" + gridColors["15-24"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 15-24 &nbsp;&nbsp;" +
       " <span style='background-color:" + gridColors["25-34"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 25-34 &nbsp;&nbsp;" +
       " <span style='background-color:" + gridColors["35-44"] +";'>&nbsp; &nbsp;&nbsp;</span>" + " 35-44 &nbsp;&nbsp;" +
@@ -645,8 +645,7 @@ d3.json("mass_towns.json")
       names.push(name_obj)
     }
     get_average();
-    //need to nest data such that we have all years for each county
-    // console.log(names)
+
 
 
     // Sizing of counties over time
@@ -655,7 +654,7 @@ d3.json("mass_towns.json")
       .attr("height", height+ margins.top + margins.bottom);
 
     const chartSteph = svgSteph.append("g")
-        .attr("transform", `translate(${margins.left}, ${margins.top})`);
+        .attr("transform", `translate(${margins.left}, ${margins.top-20})`);
 
     const svg2 = d3.select("#key")
         .attr("width", 300+ margins.right + margins.left)
@@ -752,15 +751,12 @@ d3.json("mass_towns.json")
 
     current_lines=current_lines.merge(new_lines);
 
-    current_lines.attr("d", function(d){
-
-    return line(d.data);
-    })
+    current_lines.attr("d", (d)=>line(d.data))
         .style("stroke", function(d,i){
 
-    return color_scale_townlines[i]})
+          return color_scale_townlines[i]})
         .style("fill", "none")
-        .attr('stroke-width', function(d) {
+        .style('stroke-width', function(d) {
           if (d.name==="Average"){
             return 5;
           }
@@ -768,7 +764,7 @@ d3.json("mass_towns.json")
             return 3;
           }
         });
-        //added resizable lines here
+
 
     d3.selectAll("#controls").on("change", function(){
      const option = d3.select(this);
@@ -779,23 +775,24 @@ d3.json("mass_towns.json")
      let lines=chartSteph.selectAll(".namelines");
 
      if (curr_val==true){
-       lines.attr('stroke-width', function(d) {
+       lines.style('stroke-width', function(d) {
            if (d.name==="Average"){
 
              return 5;
            }
            else{
-             console.log("hre")
+
              return width_scale(+d.data[0]["Population"]);
            }
         });
      }
      else{
-       lines.attr('stroke-width', function(d) {
+       lines.style('stroke-width', function(d) {
            if (d.name==="Average"){
              return 5;
            }
            else{
+
              return 3;
            }
         });
