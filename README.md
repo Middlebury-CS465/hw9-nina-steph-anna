@@ -14,7 +14,10 @@ This is a final project for CS 465 Information Visualization at Middlebury Colle
 Download the full repository, including data files. Run a local server and launch `index.html`
 
 To run a local server:
-In the command line, navigate to the directory where this repository is located. Type `python -m http.server`. Go to the web addressed returned in the command line and open `index.html`.
+
+In the command line, navigate to the directory where this repository is located. 
+
+Type `python -m http.server`. Go to the web addressed returned in the command line and open `index.html`.
 
 This web page is opitimized for laptop computers and windows with width ~1000
 
