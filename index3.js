@@ -88,7 +88,9 @@ d3.json("mass_towns.json")
 
     //create coloring tool
     const color_scale_map = d3.scaleQuantize()
-        .range(colorbrewer.YlGnBu[8]); //YlOrBr
+        .range(colorbrewer.YlGnBu[8]);
+    
+         //YlOrBr
 
     // Data assignments
     const county_data = data[0];
@@ -183,7 +185,7 @@ scatterplot.append("line")
     .attr("y2", y_scale(.03156 * 91295 - 100.1))
     .style("stroke", "lightgray")
 
-
+console.log(townData)
 console.log("counties before map", ma_counties)
 
 // map countyData, so we can easily find records for a given county
@@ -306,7 +308,7 @@ const x_scale_town = d3.scaleLinear()
 
 const y_scale_town = d3.scaleLinear()
   .range([town_height, 0])
-  .domain([0,0.005]);
+  // .domain([0,0.005]);
 
 town_plot.append("text")
   .attr("text-anchor", "middle")
@@ -327,7 +329,7 @@ let ybar=town_plot.append("g")
 
 let town_plot_title = town_plot.append("text")
       .attr("text-anchor", "middle")
-      .attr("transform", `translate(${town_width/2}, 10)`)
+      .attr("transform", `translate(${town_width/2}, -10)`)
        .text("");
 
 
@@ -354,11 +356,39 @@ const update_town_vis = function() {
     const name_obj = {name:name, data:selected, color: null};
     names2.push(name_obj)
   }
+  console.log(names2)
+  function find_max(){
+    max=0;
+    for (name=0; name<names2.length; name++){
+      let data=names2[name].data;
+      console.log(data)
+      for (year=0; year<data.length; year++){
+          let tyear=data[year];
+          let dperCap=+tyear.DeathsPerCapita;
+
+          if (max<dperCap){
+
+            max=dperCap;
+          }
+
+
+      }
+    }
+    return max;
+  }
+  let themax=find_max();
+  console.log(themax)
+  y_scale_town.domain([0, themax]);
+
+
   // y_scale_town.domain(d3.extent(names2, (d)=>d.data[0]["DeathsPerCapita"]))
-  // ybar.call(d3.axisLeft(y_scale_town));
-  let color_scale_townlines= d3.scaleQuantize()
-    .domain(d3.extent(names2, (d, i)=>(i)))
-    .range(colorbrewer.YlGnBu[8]);
+  ybar.call(d3.axisLeft(y_scale_town));
+
+  // let color_scale_townlines= d3.scaleQuantize()
+  //   .domain(d3.extent(names2, (d, i)=>(i)))
+  //   .range(colorbrewer.YlGnBu[8]);
+
+let color_scale_townlines=['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','gray','#bc80bd','#ccebc5','#ffed6f', '#fb9a99', '#a6cee3', 'black'];
 
 
   const line = d3.line()
@@ -402,18 +432,17 @@ const update_town_vis = function() {
   current=current.merge(new_lines);
 
   current.attr("d", function(d,i){
+
       return line(d.data);
   })
   .style("stroke", function(d,i){
-    return color_scale_townlines(i)})
+    return color_scale_townlines[i]})
   .style("fill", "none")
   .attr('stroke-width', function(d) {
-      if (d.name==="Average"){
-        return 3;
-      }
-      else{
-        return 1;
-      }
+
+
+        return 2;
+
 
    })
 
@@ -670,10 +699,10 @@ var y_scale1 = d3.scaleLinear()
   .range([height, 0])
   .domain([0,0.0005]);
 
-let color_scale_townlines= d3.scaleQuantize()
-  .domain(d3.extent(names, (d,i) => i))
-  .range(colorbrewer.YlGnBu[8]);
-
+// let color_scale_townlines= d3.scaleQuantize()
+//   .domain(d3.extent(names, (d,i) => i))
+//   .range(colorbrewer.YlGnBu[8]);
+let color_scale_townlines=['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','gray','#bc80bd','#ccebc5','#ffed6f', '#fb9a99', '#a6cee3', 'black'];
 
 const line = d3.line()
   .x(function(d){
@@ -697,17 +726,18 @@ const line = d3.line()
   let new_lines=current_lines.enter()
         .append("path")
         .attr("class", "namelines")
-        .on('mouseover', function(d){
+        .on('mouseover', function(d, i){
 
           const tooltip=d3.select("#tooltipSteph");
 
           tooltip.classed("hidden", false);
           const name=d.name;
+
           d3.select("#nameSteph").text(d.name);
 
           d3.select("#popSteph").text(+d.data[0]["Population"]);
 
-
+          let currNum=i;
           const coordinates = [d3.event.pageX, d3.event.pageY];
 
           tooltip.style("left", (coordinates[0]+25) + "px");
@@ -717,13 +747,26 @@ const line = d3.line()
           const curr = d3.select(this);
           let lines=chartSteph.selectAll(".namelines");
 
-          lines.style('stroke', function(d) {
-              if (d.name!=name){
+          lines.style('stroke', function(d, i) {
+              if (i==currNum){
                 console.log("here")
+                return color_scale_townlines[i];
+              }
+              else{
                 return "lightgray";
               }
 
            });
+           lines.style('stroke-width', function(d, i) {
+               if (i==currNum){
+
+                 return 7;
+               }
+               else{
+                 return 3;
+               }
+
+            });
 
         })
         .on('mouseout', function(d){
@@ -734,10 +777,20 @@ const line = d3.line()
           lines.style('stroke', function(d, i) {
 
 
-                return color_scale_townlines(i);
+                return color_scale_townlines[i];
 
 
            });
+           lines.style('stroke-width', function(d, i) {
+             if (d.name==="Average"){
+
+               return 5;
+             }
+             else{
+                 return 3;
+               }
+
+            });
         })
 
 
@@ -750,7 +803,7 @@ const line = d3.line()
   })
   .style("stroke", function(d,i){
 
-    return color_scale_townlines(i)})
+    return color_scale_townlines[i]})
   .style("fill", "none")
   .attr('stroke-width', function(d) {
       if (d.name==="Average"){
@@ -820,7 +873,7 @@ const line = d3.line()
   .attr('y',(d,i)=>i*20)
   .attr('width', 60)
   .attr('height', 20)
-  .style("fill", (d, i)=>color_scale_townlines(i)/*d3.schemeCategory20[i]*/);
+  .style("fill", (d, i)=>color_scale_townlines[i]);
 
   //current set for text
   let currentText=key.selectAll(".keytext")
