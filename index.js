@@ -37,7 +37,7 @@ for(i=0; i <genderAsList.length; i++){
 }
 //-----------END Vis 1 grid data
 
-// Constants for sizing the small chart below map
+// Constants for sizing the town line plot
 const town_width = 250;
 const town_height = 250;
 
@@ -87,11 +87,8 @@ d3.json("mass_towns.json")
     const ma_counties = topojson.feature(county_map_data, county_map_data.objects.mass_counties);
     const ma_towns = topojson.feature(town_map_data, town_map_data.objects.ma_towns);
 
-    console.log("ma towns first loaded", ma_towns)
-
-    // set domain of map color scale
-    // This needs some attention. Currently set based on min/max of county data,
-    // but towns have a different scale (lower min and higher max) Something looks gross either way.
+    // set domain of map color scale (used for both county and town choropleth)
+    // Min value set to account for lower min value of town-level data without overly simplifying county level map
     color_scale_map.domain([.0009, d3.max(county_data, (d) => +d["TotalDeathsPerCapita"])]);
 
     // nest the county level data
@@ -99,19 +96,15 @@ d3.json("mass_towns.json")
         .key((d) => d.County)
         .entries(county_data);
 
-    //nest the town level data
+    //single nest the town level data (for town plot)
     let townData = d3.nest()
         .key((d) => d.County)
         .entries(town_data);
 
-    // double nest the town level data
+    // double nest the town level data (for town map)
     let townData2 = d3.nest()
         .key((d) => d.City)
         .entries(town_data)
-
-    console.log("townData2", townData2)
-    console.log("townData", townData)
-    console.log("counties before map", ma_counties)
 
     // map countyData, so we can easily find records for a given county
     const county_map = d3.map();
@@ -137,10 +130,11 @@ d3.json("mass_towns.json")
         .enter()
         .append("path")
         .attr("d", mapPath)
+        .attr("id", (d) => d.properties.NAME)
         .attr("class", "county-borders");
 
     //style each county to set fill color based on deaths per capita
-    counties.style("stroke", "lightgray")
+    counties.style("stroke", "white")
         .style("fill", function(d) {
           if (d.properties.value) {
             return color_scale_map(+d.properties.value["TotalDeathsPerCapita"]);
@@ -152,8 +146,6 @@ d3.json("mass_towns.json")
       // map townData, so we can easily find records for a given town
       const town_map = d3.map();
       townData2.forEach((d) => {town_map.set(d.values[0].City, d.values[0])});
-
-      console.log("towns after data map", town_map);
 
       //Loop through the path data, attach appropriate record to each one
       for (let i = 0; i < ma_towns.features.length; i++) {
@@ -170,8 +162,6 @@ d3.json("mass_towns.json")
         }
         ma_towns.features[i].properties.value = town_map.get(town_name);
       };
-
-    console.log("ma towns" , ma_towns);
 
 
     //event handlers for map
@@ -194,19 +184,39 @@ d3.json("mass_towns.json")
       d3.selectAll(".county-borders").style("fill-opacity", 1);
     });
 
-    // Clicking a county on the map updates the line plot
+    // Clicking a county on the map updates the line plot, county and town map layers
     counties.on("click", function(item_data) {
-      selectedCounty = item_data.properties.NAME;
+      selected_county = item_data.properties.NAME;
       update_town_vis();
-
-
-      // get county out of item data
-      let selected_county = item_data.properties.NAME
+      update_county_map(selected_county);
       update_town_map(selected_county);
-
     });
 
-    /* Update Town Map based on selected county
+
+    /*
+      Updates county map to make selected county gray.
+      Called by click event handler for counties
+    */
+    const update_county_map = function(selected_county) {
+
+      d3.selectAll(".county-borders")
+        .style("fill", function(d) {
+          if (d.properties.value) {
+            return color_scale_map(+d.properties.value["TotalDeathsPerCapita"]);
+          } else{
+            return "red";
+          }
+        });
+
+      d3.select("#" + selected_county )
+        .style("fill", "lightgray");
+
+    };
+
+
+    /*
+      Update town-layer to show towns for selected county.
+      Called by click event handler for counties
     */
     const update_town_map = function(selected_county) {
 
@@ -223,9 +233,9 @@ d3.json("mass_towns.json")
       // Enter/exit/update for Towns
       let towns = d3.select("#town-layer").selectAll(".town-borders")
           .data(selected_towns_data, (d) => d)
-        // console.log("exit", towns.exit());
+
        towns.exit().remove();
-       // console.log("enter", towns.enter())
+
       let new_towns = towns.enter()
                  .append("path")
                  .attr("d", mapPath)
@@ -234,7 +244,7 @@ d3.json("mass_towns.json")
         towns = towns.merge(new_towns);
 
         towns.style("stroke", "lightgray")
-          .style("stroke-width", 0)
+          .style("stroke-width", 0.5)
           .style("fill", function(d) {
             if (d.properties.value && d.properties.value["TotalDeathsPerCapita"] !== "NA") {
               return color_scale_map(+d.properties.value["TotalDeathsPerCapita"]);
@@ -294,7 +304,7 @@ d3.json("mass_towns.json")
         .attr("class", "newPoints")
         .attr("cx", (d) => x_scale(+d.values[0].TotalPrescriptions))
         .attr("cy", (d) => y_scale(+d.values[0].TotalDeathsAllYears))
-        .attr("r", 4) // (d) => (+d.values[0].Population) * .000001
+        .attr("r", 4)
         .style("fill", color_scale_map(.0025));
 
     points.on("mouseover", function(d){
@@ -336,7 +346,6 @@ d3.json("mass_towns.json")
 
     const y_scale_town = d3.scaleLinear()
       .range([town_height, 0])
-      // .domain([0,0.005]);
 
     town_plot.append("text")
       .attr("text-anchor", "middle")
@@ -369,8 +378,8 @@ d3.json("mass_towns.json")
     const update_town_vis = function() {
       let names2=[];
 
-      // Filter townData to just the selectedCounty
-      let filtered_town_data = townData.filter((d) => d.key == selectedCounty)[0].values
+      // Filter townData to just the selected_county
+      let filtered_town_data = townData.filter((d) => d.key == selected_county)[0].values
 
       const data = d3.nest()
         .key(function(d) { return d.City; })
@@ -473,7 +482,7 @@ d3.json("mass_towns.json")
 
        })
 
-      town_plot_title.text("Towns in " + String(selectedCounty) + " County")
+      town_plot_title.text("Towns in " + String(selected_county) + " County")
 
     };
 
@@ -895,4 +904,4 @@ const gradient_bar = d3.select('#gradient_bar')
     d3.select('#grad_val2').html("&nbsp; &nbsp; &nbsp; &nbsp;" + ((deaths_pc_max + deaths_pc_min)/2).toPrecision(3))
     d3.select('#grad_val3').html("&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;" +deaths_pc_max.toPrecision(3))//20th percentile of deaths per Capita....
 
-}); //d3.csv().then()
+});
